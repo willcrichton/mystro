@@ -66,8 +66,12 @@ body {
 }
 
 .instrument.hover {
-    /*border-color: #c71621;*/
     opacity: 1;
+}
+
+.instrument.active {
+    border-color: #c71621;
+    box-shadow: inset 0 0 10px #c71621;
 }
 
 .instrument:last-child {

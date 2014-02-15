@@ -8,11 +8,11 @@ var dataProcessing = (function() {
         //     ...
         //  }
     ]
+    var lastAverageVelocity = 0;
 
     detectSelectCallback = function() {
         //console.log('No select callback registered.');
     }
-
     detectVolumeChangeCallback = function() {
         //console.log('No volume callback registered.');
     }
@@ -23,11 +23,48 @@ var dataProcessing = (function() {
         console.log('No location callback registered.');
     }
 
+
     // Gets the magnitude of a number vector with 0..2 indices
     function magnitude3(vec) {
         return Math.sqrt(vec[0]*vec[0] + vec[1]*vec[1] + vec[2]*vec[2]);
     }
 
+    function averageVector3(vecs){
+        sum = $V([0,0,0]);
+        for (var i = vecs.length - 1; i >= 0; i--) {
+            sum = sum.add($V(vecs[i]));
+        };
+        return sum.multiply(1.0/vecs.length).elements;
+    }
+
+    // Use OLD DATA to caluate an average acceleration over the previous
+    // n iterations.
+    function historicalAcceleration(n){
+        TIMEOUT = 1000;
+        if(oldData.length >= n){
+            var lastn = oldData.slice(-n).filter(function(y){return x.pointerSpeed != null && (((new Date().getTime()) - x.time) < 1000)}).map(function(x){x.pointerSpeed});
+            var accels = [];
+            for (var i = lastn.length - 1; i >= 1; i--) {
+                accels.push($V(lastn[i]).subtract($V(lastn[i-1])).elements);
+            };
+            return averageVector3(accels);
+        }
+        else{
+            return 0;            
+        }
+        return 0;
+    }
+
+    function relativeAcceleration(pointerSpeed, n){
+        if(oldData.length >= n){
+            var lastn = oldData.slice(-n).filter(function(y){return x.pointerSpeed != null && (((new Date().getTime()) - x.time) < 1000)}).map(function(x){x.pointerSpeed});
+            var avgOldSpeed = averageVector3(lastn);
+            return $V(pointerSpeed).subtract($V(avgOldSpeed)).elements;
+        }
+        else{
+            return 0;            
+        }
+    }
 
     // Returns true if an instrumental group is selected.
     // returns false otherwise.
@@ -35,13 +72,13 @@ var dataProcessing = (function() {
         var ZPLANE = 0; 
         if(handLoc != null){
             if(handLoc[2] < ZPLANE){
-            detectSelectCallback(true);		
+                detectSelectCallback(true);     
             }
         }
     }
 
-    var MIN_PALM_HEIGHT = 200;
-    var MAX_PALM_HEIGHT = 400;
+    var MIN_PALM_HEIGHT = 100;
+    var MAX_PALM_HEIGHT = 500;
     function normedVol(absoluteVolDelta) {
         return absoluteVolDelta/(MAX_PALM_HEIGHT - MIN_PALM_HEIGHT);
     }
@@ -53,12 +90,13 @@ var dataProcessing = (function() {
     // element of oldData is actually the current data, so ignore that one.
     // Also checks that the data is 'recent enough'.
     function lastVolData(time) {
-        var IGNORE_IF_MORE_THAN_MILLIS = 1000;
+        var IGNORE_IF_OLDER_THAN_MILLIS = 1000;
         if(oldData.length > 1) {
             for(var i = oldData.length-2; i >= 0; i--) {
                 var elt = oldData[i];
-                if(elt.handLoc !== null && elt.palmVelocity != null) {
-                    if(time - elt.time > IGNORE_IF_MORE_THAN_MILLIS) {
+                if(elt.handLoc !== null && elt.palmVelocity != null &&
+                   elt.handLoc[1] <= MAX_PALM_HEIGHT && elt.handLoc[1] >= MIN_PALM_HEIGHT) {
+                    if(time - elt.time > IGNORE_IF_OLDER_THAN_MILLIS) {
                         return null;
                     } else {
                         return elt;
@@ -78,8 +116,15 @@ var dataProcessing = (function() {
             throw new Error('handLoc is undefined!');
         }
 
+        /*
+        if(handLoc[1] < MIN_PALM_HEIGHT || handLoc[1] > MAX_PALM_HEIGHT) {
+            // Out of range. Ignore.
+            return;
+        }
+        */
+
         if(palmVelocity === null || handLoc === null) {
-            var prevGoodData = lastVolData(time);
+            /*var prevGoodData = lastVolData(time);
             if(prevGoodData === null) {
                 //console.log('No recent left hand. (null)');
                 return;
@@ -94,9 +139,21 @@ var dataProcessing = (function() {
             }
 
             // Linearly interpolate to guess new volume.
+            console.log('Time: ' + prevTime.time);
+            console.log('Velocity: ' + prevGoodData.palmVelocity);
             var result = (time - prevTime.time)*prevGoodData.palmVelocity;
+
+                if(_.isNaN(result)) console.log('Found result = NaN');
+                var tmp = normedVol(result);
+                if(_.isNaN(tmp)) console.log('Found normedVol = NaN');
             detectVolumeChangeCallback(normedVol(result));
+            */
         } else {
+            if(handLoc[1] < MIN_PALM_HEIGHT || handLoc[1] > MAX_PALM_HEIGHT) {
+                // Out of range. Ignore.
+                return;
+            }
+
             var moveDirection = palmVelocity[1];
             var thisHeight = handLoc[1];
             var lastHeightElt = lastVolData(time);
@@ -106,41 +163,45 @@ var dataProcessing = (function() {
             }
             var lastHeight = lastHeightElt.handLoc[1];
             var result = null;
-            if(moveDirection > 0 && thisHeight > lastHeight) {
+            if((moveDirection > 0 && thisHeight > lastHeight) ||
+               (moveDirection < 0 && thisHeight < lastHeight)) {
                 result = thisHeight - lastHeight;
-                //console.log('up');
-            } else if(moveDirection < 0 && thisHeight < lastHeight) {
-                result = thisHeight - lastHeight;
-                //console.log('down');
             }
 
             if(result !== null) {
+                //if(_.isNaN(result)) console.log('Found result = NaN');
+                //var tmp = normedVol(result);
+                //if(_.isNaN(tmp)) console.log('Found normedVol = NaN');
                 detectVolumeChangeCallback(normedVol(result));
             }
         }
     }
-
-
-    // Use OLD DATA to caluate an average acceleration over the previous
-    // n iterations.
-    function acceleration(pointerSpeed, n){
-        return 0;
-    }
     
     // Returns whether the current state is a beat.
     function detectTempoChange(pointerTip, pointerSpeed, handLoc){
-	
         //Using OLD DATA or something, return if data already happened.
-
+        var V_SMOOTHNESS = 3
+        if(pointerTip != null){
+            var oldvs = oldData.slice(-V_SMOOTHNESS).map(function(y){return y.pointerSpeed});
+            //console.log(oldData.slice(-V_SMOOTHNESS).map(function(y){return y}));
+            var avgVel = averageVector3(oldvs);
+            //console.log(avgVel[1]);
+            if(avgVel[1] > 0 && lastAverageVelocity[1] <= 0){
+                //This is a beat
+                console.log("beat");
+            }
+            lastAverageVelocity = avgVel;
+            //lastBeatTime = 
+        }
         detectTempoChangeCallback(null);
     }
 
-    // Helper for detectOrchLoc
-    function detectRecentHandLoc(){
-        var LEFTEDGE = -300; 
-        var TOPEDGE = 400;
-        return [LEFTEDGE, TOPEDGE];
-    }
+    // Helper for detectOrchLoc (Not used as of saturday morning)
+    // function detectRecentHandLoc(){
+    //     var LEFTEDGE = -300; 
+    //     var TOPEDGE = 400;
+    //     return [LEFTEDGE, TOPEDGE];
+    // }
 
     // Points to a region in the orchestra.    
     // Does simple physics vector addition with some bounds.
@@ -164,13 +225,11 @@ var dataProcessing = (function() {
         var TOPEDGE = 450;
         var DEPTH =  50;         //variable
 
-
-
-	// Ignore out of place places, since the front end will 
-	// display exactly what we want (unchanged).
+       // Ignore out of place places, since the front end will 
+       // display exactly what we want (unchanged).
         if(handLoc === null || (handLoc[0] < LEFTEDGE || handLoc[0] > RIGHTEDGE)
-	   || (handLoc[1] < BOTTOMEDGE || handLoc[1] > TOPEDGE)){
-	    //console.log(handLoc);
+       || (handLoc[1] < BOTTOMEDGE || handLoc[1] > TOPEDGE)){
+            //console.log(handLoc);
             return;
         }
         var handX = handLoc[0];
@@ -183,24 +242,24 @@ var dataProcessing = (function() {
         var fingerX = fingerDir[0];
         var fingerY = fingerDir[1];
         
-	var fingerNorm = Math.sqrt(fingerX*fingerX + fingerY*fingerY);
+        var fingerNorm = Math.sqrt(fingerX*fingerX + fingerY*fingerY);
         if(fingerNorm === 0){
             var fingerLocNorm = [0,0];
         }
         else{
-            var fingerLocNorm = [fingerX/fingerNorm, 
-                      fingerY/fingerNorm];
+            var fingerLocNorm = [fingerX/fingerNorm, fingerY/fingerNorm];
         }
-	
+    
         var finalHandLoc = [handX + fingerLocNorm[0]*DEPTH, 
-			    handY + fingerLocNorm[1]*DEPTH];
-	var finalNormedLoc = [(finalHandLoc[0] - LEFTEDGE)/(RIGHTEDGE-LEFTEDGE), 
-                  (finalHandLoc[1] - BOTTOMEDGE)/(TOPEDGE-BOTTOMEDGE)];
-	
-	finalNormedLoc = _.map(finalNormedLoc, function (v){ if(v < 0) {return 0;} 
-					    else if(v > 1) {return 1;}
-					    else return v;});
-	
+                            handY + fingerLocNorm[1]*DEPTH];
+
+        var finalNormedLoc = [(finalHandLoc[0] - LEFTEDGE)/(RIGHTEDGE-LEFTEDGE), 
+                              (finalHandLoc[1] - BOTTOMEDGE)/(TOPEDGE-BOTTOMEDGE)];
+    
+        finalNormedLoc = _.map(finalNormedLoc, function (v){ if(v < 0) {return 0;} 
+                        else if(v > 1) {return 1;}
+                        else return v;});
+    
         detectOrchLocCallback(finalNormedLoc);
     }
 
@@ -213,6 +272,13 @@ var dataProcessing = (function() {
         // fingerDir : array 0..2 (normalized)
         // For each input, no data if null
         pushData: function(pointerTip, pointerSpeed, handLoc, palmVelocity, fingerDir) {
+            if(handLoc === undefined) {
+                throw new Error('undefined handLoc passed to pushData.');
+            }
+            if(palmVelocity === undefined) {
+                throw new Error('undefined palmVelocity passed to pushData.');
+            }
+
             time = (new Date()).getTime();
             oldData.push({
                 time: time,
@@ -225,9 +291,6 @@ var dataProcessing = (function() {
 
             detectSelect(handLoc);
 
-            if(palmVelocity === undefined) {
-                console.log('asdlkjffffff');
-            }
             detectVolumeChange(handLoc, palmVelocity, time);
             detectTempoChange(pointerTip, pointerSpeed, handLoc);
             detectOrchLoc(handLoc, fingerDir);
