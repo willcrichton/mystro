@@ -3,4 +3,71 @@
 body {
     background: white;
     font-family: 'Open Sans', Arial, sans-serif;
-}{
+}
+
+#score {
+    width: 900px;
+    margin: 30px auto 0;
+    overflow: auto;
+    height: 400px;
+}
+
+#score img {
+    width: 900px;
+}
+
+#instruments {
+    width: 500px;
+    margin: 50px auto 0;
+    overflow: auto;
+}
+
+.instrument {
+    width: 150px;
+    height: 95px;
+    padding-top: 55px;
+    font-size: 24px;
+    color: white;
+    text-shadow: 0 0 2px black;
+    text-align: center;
+    border-radius: 4px;
+    position: relative;
+    float: left;
+    text-transform: uppercase;
+    transition: 0.2s all;
+    margin-right: 20px;
+}
+
+.instrument:last-child {
+    margin: 0;
+}
+
+.instrument:hover {
+    box-shadow: 0 0 10px rgba(255, 255, 255, 0.7);
+    text-shadow: 0 0 6px black;
+    cursor: pointer;
+}
+
+.drum {
+    background: #267326;
+}
+
+.drum:hover {
+    background: #318F31;
+}
+
+.violin {
+    background: #87352F;
+}
+
+.violin:hover {
+    background: #BF4941;
+}
+
+.clarinet {
+    background: #2F648A;
+}
+
+.clarinet:hover {
+    background: #418BBF;
+}
