@@ -34,7 +34,9 @@ var dataProcessing = (function() {
     function detectSelect(handLoc) {
 	var ZPLANE = 0; 
 	if(handLoc != null){
-	    detectSelectCallback(handLoc[2] < ZPLANE);
+	    if(handLoc[2] < ZPLANE){
+		detectSelectCallback(true);		
+	    }
 	}
     }
 
@@ -110,8 +112,20 @@ var dataProcessing = (function() {
     }
 
 
-    // Returns an absolute or relative change in tempo.
-    function detectTempoChange(pointerTip, pointerSpeed, handLoc, palmDir, fingerDir) {
+    // Use OLD DATA to caluate an average acceleration over the previous
+    // n iterations.
+    function acceleration(pointerSpeed, n){
+	return 0;
+    }
+    
+    
+    
+    
+    // Returns whether the current state is a beat.
+    function detectTempoChange(pointerTip, pointerSpeed, handLoc){
+	
+	//Using OLD DATA or something, return if data already happened.
+
         detectTempoChangeCallback(null);
     }
 
@@ -194,7 +208,7 @@ var dataProcessing = (function() {
             if(handLoc !== null && palmDir !== null) {
                 detectVolumeChange(handLoc, palmDir);
             }
-            detectTempoChange(pointerTip, pointerSpeed, handLoc, palmDir, fingerDir);
+            detectTempoChange(pointerTip, pointerSpeed, handLoc);
             detectOrchLoc(handLoc, fingerDir);
         },
         onDetectSelectChange: function(callback) {
