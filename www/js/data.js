@@ -8,6 +8,7 @@ var dataProcessing = (function() {
         //     ...
         //  }
     ]
+    var lastAverageVelocity = 0;
 
     detectSelectCallback = function() {
         //console.log('No select callback registered.');
@@ -39,13 +40,14 @@ var dataProcessing = (function() {
     // Use OLD DATA to caluate an average acceleration over the previous
     // n iterations.
     function historicalAcceleration(n){
-        if(oldData.length >= n)
+        if(oldData.length >= n){
             var lastn = oldData.slice(-n).map(function(x){x.pointerSpeed});
             var accels = [];
             for (var i = lastn.length - 1; i >= 1; i--) {
                 accels.push($V(lastn[i]).subtract($V(lastn[i-1])).elements);
             };
             return averageVector3(accels);
+        }
         else{
             return 0;            
         }
@@ -53,10 +55,11 @@ var dataProcessing = (function() {
     }
 
     function relativeAcceleration(pointerSpeed, n){
-        if(oldData.length >= n)
+        if(oldData.length >= n){
             var lastn = oldData.slice(-n).map(function(x){x.pointerSpeed});
             var avgOldSpeed = averageVector3(lastn);
             return $V(pointerSpeed).subtract($V(avgOldSpeed)).elements;
+        }
         else{
             return 0;            
         }
@@ -157,7 +160,19 @@ var dataProcessing = (function() {
     // Returns whether the current state is a beat.
     function detectTempoChange(pointerTip, pointerSpeed, handLoc){
         //Using OLD DATA or something, return if data already happened.
-
+        var V_SMOOTHNESS = 3
+        if(pointerTip != null){
+            var oldvs = oldData.slice(-V_SMOOTHNESS).map(function(y){return y.pointerSpeed});
+            //console.log(oldData.slice(-V_SMOOTHNESS).map(function(y){return y}));
+            var avgVel = averageVector3(oldvs);
+            //console.log(avgVel[1]);
+            if(avgVel[1] > 0 && lastAverageVelocity[1] <= 0){
+                //This is a beat
+                console.log("beat");
+            }
+            lastAverageVelocity = avgVel;
+            lastBeatTime = 
+        }
         detectTempoChangeCallback(null);
     }
 
@@ -194,7 +209,7 @@ var dataProcessing = (function() {
        // display exactly what we want (unchanged).
         if(handLoc === null || (handLoc[0] < LEFTEDGE || handLoc[0] > RIGHTEDGE)
        || (handLoc[1] < BOTTOMEDGE || handLoc[1] > TOPEDGE)){
-            console.log(handLoc);
+            //console.log(handLoc);
             return;
         }
         var handX = handLoc[0];
