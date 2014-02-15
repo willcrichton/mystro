@@ -77,7 +77,7 @@ var dataProcessing = (function() {
         }
     }
 
-    var MIN_PALM_HEIGHT = 200;
+    var MIN_PALM_HEIGHT = 100;
     var MAX_PALM_HEIGHT = 400;
     function normedVol(absoluteVolDelta) {
         return absoluteVolDelta/(MAX_PALM_HEIGHT - MIN_PALM_HEIGHT);
@@ -132,6 +132,7 @@ var dataProcessing = (function() {
 
             // Linearly interpolate to guess new volume.
             var result = (time - prevTime.time)*prevGoodData.palmVelocity;
+
             detectVolumeChangeCallback(normedVol(result));
         } else {
             var moveDirection = palmVelocity[1];
@@ -143,12 +144,9 @@ var dataProcessing = (function() {
             }
             var lastHeight = lastHeightElt.handLoc[1];
             var result = null;
-            if(moveDirection > 0 && thisHeight > lastHeight) {
+            if((moveDirection > 0 && thisHeight > lastHeight) ||
+               (moveDirection < 0 && thisHeight < lastHeight)) {
                 result = thisHeight - lastHeight;
-                //console.log('up');
-            } else if(moveDirection < 0 && thisHeight < lastHeight) {
-                result = lastHeight - thisHeight;
-                //console.log('down');
             }
 
             if(result !== null) {

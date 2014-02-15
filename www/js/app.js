@@ -101,7 +101,7 @@ $(function() {
             var gain = context.createGainNode();
             gain.connect(processor);
             source.connect(gain);
-            gain.gain.value = 0.0;
+            gain.gain.value = 1.0;
 
             sources[i] = source;
             gains[i] = gain;
@@ -138,7 +138,12 @@ $(function() {
     });
 
     dataProcessing.onDetectVolumeChange(function(delta) {
+        if (isNaN(delta) || Math.abs(delta) < 0.01) return;
 
+        console.log(delta);
+        gains.forEach(function(node) {
+            node.gain.value += delta * 5;
+        });
     });
 
     dataProcessing.onDetectOrchLoc(function(pair) {
