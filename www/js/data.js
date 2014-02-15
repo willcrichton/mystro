@@ -249,20 +249,20 @@ var dataProcessing = (function() {
 
     // The variable to change is DEPTH. Lower DEPTH = smoother lateral movement.
     //                                  Higher DEPTH = smoother pointing.
+
     function detectOrchLoc(handLoc, fingerDir) {
         // Constants for determining edges
 
-        var RIGHTEDGE = 0;
+        var RIGHTEDGE = 50;
         var LEFTEDGE = -280; 
         var BOTTOMEDGE = 180;
         var TOPEDGE = 450;
-        var DEPTH =  250;         //variable
+        var DEPTH =  50;         //variable
 
        // Ignore out of place places, since the front end will 
        // display exactly what we want (unchanged).
-        if(handLoc === null || (handLoc[0] < (LEFTEDGE-80)) || (handLoc[0] > (RIGHTEDGE + 60))
-	   || (handLoc[1] < (BOTTOMEDGE-100)) || (handLoc[1] > (TOPEDGE+50))  ){
-            //console.log(handLoc);
+        if(handLoc === null || (handLoc[0] < LEFTEDGE || handLoc[0] > RIGHTEDGE)
+	   || (handLoc[1] < BOTTOMEDGE || handLoc[1] > TOPEDGE)){
             return;
         }
         var handX = handLoc[0];
@@ -283,15 +283,15 @@ var dataProcessing = (function() {
             var fingerLocNorm = [fingerX/fingerNorm, fingerY/fingerNorm];
         }
     
-        var finalHandLoc = [handX + fingerLocNorm[0]*Math.abs(fingerLocNorm[0])*DEPTH,
-                            handY + fingerLocNorm[1]*Math.abs(fingerLocNorm[1])*DEPTH];
+        var finalHandLoc = [handX + fingerLocNorm[0]*DEPTH, 
+                            handY + fingerLocNorm[1]*DEPTH];
 
         var finalNormedLoc = [(finalHandLoc[0] - LEFTEDGE)/(RIGHTEDGE-LEFTEDGE), 
                               (finalHandLoc[1] - BOTTOMEDGE)/(TOPEDGE-BOTTOMEDGE)];
-	console.log(finalNormedLoc);
-        finalNormedLoc = _.map(finalNormedLoc, function (u){ var v = u/2; if(v < 0) {return 0;} 
-                        else if(v > 1) {return 0.99;}
-                        else return v;});
+    
+        finalNormedLoc = _.map(finalNormedLoc, function (v){ if(v < 0) {return 0;} 
+							     else if(v > 1) {return 0.99;}
+							     else return v;});
     
         detectOrchLocCallback(finalNormedLoc);
     }
