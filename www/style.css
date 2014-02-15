@@ -3,6 +3,7 @@
 body {
     background: white;
     font-family: 'Open Sans', Arial, sans-serif;
+    font-weight: 300;
 }
 
 #play {
@@ -14,7 +15,7 @@ body {
     padding: 10px;
     text-align: center;
     font-size: 48px;
-    background: #BF4941;
+    background: #c71621;
     color: white;
     text-shadow: 0 0 1px black;
     border: none; outline: none;
@@ -24,44 +25,81 @@ body {
 
 #main {
     display: none;
+    width: 800px;
+    margin: 50px auto 0;
 }
 
 #score {
-    width: 900px;
-    margin: 30px auto 0;
+    width: 800px;
+    margin-top: 30px;
     overflow: auto;
-    height: 400px;
+    height: 320px;
+    padding: 20px;
+    background: white;
+    margin-left: -30px;
 }
 
 #score img {
-    width: 900px;
+    width: 800px;
+    margin-bottom: 20px;
 }
 
 #instruments {
-    width: 660px;
-    margin: 50px auto 0;
+    width: 780px;
+    height: 200px;
     overflow: auto;
+    /*background: url('images/orchestra.png') no-repeat center center;*/
 }
 
 .instrument {
-    width: 150px;
-    height: 95px;
-    padding-top: 55px;
+    border-radius: 100px;
+    border: 1px solid black;
+    transition: 0.2s all;
+    cursor: pointer;
+    padding-top: 25px;
+    padding-left: 15px;
+    width: 160px;
+    height: 150px;
+    opacity: 0.5;
+    float: left;
+    margin-right: 20px;
+}
+
+.instrument:hover {
+    /*border-color: #c71621;*/
+    opacity: 1;
+}
+
+.instrument:last-child {
+    margin-right: 0;
+}
+
+/*.instrument {
     font-size: 24px;
     color: white;
     text-shadow: 0 0 2px black;
     text-align: center;
-    border-radius: 4px;
     position: relative;
     float: left;
     text-transform: uppercase;
     transition: 0.2s all;
-    margin-right: 20px;
     cursor: pointer;
+    margin-top: 85px;
+    background: none!important;
+    position: relative;
+    margin-right: 45px;
+}
+
+.instrument:first-child {
+    margin-left: 60px;
+    margin-top: 120px;
+    left: 10px;
 }
 
 .instrument:last-child {
-    margin: 0;
+    margin-right: 0;
+    margin-left: -30px;
+    margin-top: 120px;
 }
 
 .instrument.active {
@@ -79,6 +117,7 @@ body {
 
 .violin {
     background: #87352F;
+    right: 15px;
 }
 
 .violin.active {
@@ -91,4 +130,4 @@ body {
 
 .clarinet.active {
     background: #418BBF;
-}
+}*/
