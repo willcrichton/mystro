@@ -157,4 +157,32 @@ $(function() {
         //console.log(x, y, len, Math.floor(len * x));
         $($('.instrument')[Math.floor(len * x)]).addClass('hover');
     });
+
+    var time = new Date().getTime();
+    var frames = [];
+    var NUM_FRAMES = 5;
+    dataProcessing.onDetectTempoChange(function() {
+        var cur = new Date().getTime();
+
+        if (frames.length == NUM_FRAMES) frames.pop();
+        frames.unshift(1 / (cur - time) * 1000 * 60);
+        time = cur;
+
+        var avg = 0;
+        frames.forEach(function(bpm) {
+            avg += bpm;
+        });
+
+        avg /= frames.length;
+
+        console.log(avg, frames);
+
+        sources.forEach(function(source) {
+            //source.playbackRate.value = avg / 72;
+        });
+    });
+
+    dataProcessing.onDetectSelectChange(function() {
+        //console.log('Selected!');
+    });
 });
