@@ -169,7 +169,7 @@ $(function() {
         return x;
     };
 
-    var sounds = ['beethoven.mp3']; //['zelda1.wav', 'zelda2.wav', 'zelda3.wav', 'zelda4.wav'];
+    var sounds = ['zelda1.wav', 'zelda2.wav', 'zelda3.wav', 'zelda4.wav'];
     var buffers = [];
     var sources = [];
     var gains = [];
@@ -258,22 +258,31 @@ $(function() {
         if (isNaN(delta)) return;
 
         var maxVol = 0;
-        gains.forEach(function(node, i) {
-            node.gain.value = clamp(node.gain.value + delta * 3, 0, 3.0);
-            setVolumeFill(i);
-            maxVol = (node.gain.value > maxVol) ? node.gain.value : maxVol;
-        });
+        if (selected === -1) {
+            gains.forEach(function(node, i) {
+                node.gain.value = clamp(node.gain.value + delta * 3, 0, 3.0);
+                maxVol = (node.gain.value > maxVol) ? node.gain.value : maxVol;
+                setVolumeFill(i);
+            });
+        } else {
+            var node = gains[selected];
+            gains[selected].gain.value = clamp(node.gain.value + delta * 3, 0, 3.0);
+            maxVol = (gains[selected].gain.value > maxVol) ? node.gain.value : maxVol;
+            setVolumeFill(selected);
+        }
         Hue.setColor(maxVol/3);
     });
 
     dataProcessing.onDetectOrchLoc(function(pair) {
         var x = pair[0], y = pair[1];
 
+        if (selected !== -1) return;
+
         $('#dot').css('left', x * $('#instruments').width());
 
         var len = $('.instrument').length;
         $('.instrument').removeClass('hover');
-        //console.log(x, y, len, Math.floor(len * x));
+
         $($('.instrument')[Math.floor(len * x)]).addClass('hover');
     });
 
@@ -306,11 +315,19 @@ $(function() {
         });
     });
 
+    var selected = -1;
     dataProcessing.onDetectSelectChange(function(down) {
         if (down) {
-            $('.instrument.hover').addClass('active');
+            var $instrument = $('.instrument.hover');
+            if (!$instrument.length) return;
+
+            $instrument.addClass('active');
+            selected = $instrument.index();
+
+            $('#dot').css('left', $instrument.position().left + $instrument.width() / 2);
         } else {
             $('.instrument').removeClass('active');
+            selected = -1;
         }
     });
 
