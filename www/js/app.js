@@ -33,7 +33,7 @@ $(function() {
                 var fingerDir = null;
             }
 
-            dataProcessing.pushData(pointerTip, pointerSpeed, handLoc, palmVelocity, fingerDir);
+            dataProcessing.pushData(hands, pointerTip, pointerSpeed, handLoc, palmVelocity, fingerDir);
         }
     });
     ctl.connect();

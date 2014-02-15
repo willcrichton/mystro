@@ -77,12 +77,11 @@ var dataProcessing = (function() {
     // Calls back false othe group is deselected otherwise.
     function detectSelect(handLoc) {
         if(handLoc !== null){
-            var hand = frame.hands.filter(function(elem){return (elem.tools.length == 0)})[0];
-            if(hand.pointables[0].touchDistance < 0 && currentlyTouched == 0){
+            if(hands[0].pointables[0].touchDistance < 0 && currentlyTouched == 0){
                 currentlyTouched = 1;
                 detectSelectCallback(true);
             }
-            else if(hand.pointables[0].touchDistance > 0 && currentlyTouched == 1)
+            else if(hands[0].pointables[0].touchDistance > 0 && currentlyTouched == 1)
             {
                 currentlyTouched = 0;
                 detectSelectCallback(false);
@@ -302,7 +301,7 @@ var dataProcessing = (function() {
         // palmVelocity : array 0..2 (normalized)
         // fingerDir : array 0..2 (normalized)
         // For each input, no data if null
-        pushData: function(pointerTip, pointerSpeed, handLoc, palmVelocity, fingerDir) {
+        pushData: function(hands, pointerTip, pointerSpeed, handLoc, palmVelocity, fingerDir) {
             if(handLoc === undefined) {
                 throw new Error('undefined handLoc passed to pushData.');
             }
