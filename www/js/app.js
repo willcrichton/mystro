@@ -150,7 +150,7 @@ $(function() {
         if (isNaN(delta)) return;
 
         gains.forEach(function(node, i) {
-            node.gain.value = clamp(node.gain.value + delta * 2, 0, 3.0);
+            node.gain.value = clamp(node.gain.value + delta * 3, 0, 3.0);
             setVolumeFill(i);
         });
     });
