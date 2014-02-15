@@ -150,6 +150,15 @@ $(function() {
     });
 
     dataProcessing.onDetectOrchLoc(function(pair) {
-        //console.log(pair);
+        var x = pair[0], y = pair[1];
+        /*if (y < 0.4) {
+            $('.instrument').removeClass('hover');
+            return;
+        }*/
+
+        var len = $('.instrument').length;
+        $('.instrument').removeClass('hover');
+        //console.log(x, y, len, Math.floor(len * x));
+        $($('.instrument')[Math.floor(len * x)]).addClass('hover');
     });
 });

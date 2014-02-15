@@ -9,6 +9,10 @@ var dataProcessing = (function() {
         //  }
     ]
 
+    detectSelectCallback = function() {
+        //console.log('No select callback registered.');
+    }
+
     detectVolumeChangeCallback = function() {
         //console.log('No volume callback registered.');
     }
@@ -25,9 +29,15 @@ var dataProcessing = (function() {
     }
 
 
-    // Always returns a point (coordinate) on the screen (Optional?)
-    function detectSelect(pointerTip, pointerSpeed, handLoc, palmDir, fingerDir) {
-        // This doesn't have callbacks registered.
+    // Returns true if an instrumental group is selected.
+    // returns false otherwise.
+    function detectSelect(handLoc) {
+	var ZPLANE = 0; 
+	if(handLoc != null){
+	    if(handLoc[2] < ZPLANE){
+		detectSelectCallback(true);		
+	    }
+	}
     }
 
     var MIN_PALM_HEIGHT = 200;
@@ -101,21 +111,29 @@ var dataProcessing = (function() {
     }
 
 
-    // Returns an absolute or relative change in tempo.
-    function detectTempoChange(pointerTip, pointerSpeed, handLoc, palmVelocity, fingerDir) {
+    // Use OLD DATA to caluate an average acceleration over the previous
+    // n iterations.
+    function acceleration(pointerSpeed, n){
+        return 0;
+    }
+    
+    // Returns whether the current state is a beat.
+    function detectTempoChange(pointerTip, pointerSpeed, handLoc){
+	
+        //Using OLD DATA or something, return if data already happened.
+
         detectTempoChangeCallback(null);
     }
 
-    // Points to a region in the orchestra.
-
-    // Implementation: 
-
+    // Helper for detectOrchLoc
     function detectRecentHandLoc(){
         var LEFTEDGE = -300; 
         var TOPEDGE = 400;
         return [LEFTEDGE, TOPEDGE];
     }
 
+    // Points to a region in the orchestra.    
+    // Does simple physics vector addition with some bounds.
     function detectOrchLoc(handLoc, fingerDir) {
         // Constants for determining edges
 
@@ -123,7 +141,7 @@ var dataProcessing = (function() {
         var LEFTEDGE = -300; 
         var BOTTOMEDGE = 200;
         var TOPEDGE = 400;
-        var DEPTH =  20;         //variable
+        var DEPTH =  100;         //variable
 
         // USE OLD DATA 
         if(handLoc === null){
@@ -138,7 +156,8 @@ var dataProcessing = (function() {
 
         var fingerX = fingerDir[0];
         var fingerY = fingerDir[1];
-        var fingerNorm = Math.sqrt(fingerX*fingerX + fingerY*fingerY);
+        
+	var fingerNorm = Math.sqrt(fingerX*fingerX + fingerY*fingerY);
         if(fingerNorm === 0){
             var fingerLocNorm = [0,0];
         }
@@ -146,14 +165,16 @@ var dataProcessing = (function() {
             var fingerLocNorm = [fingerX/fingerNorm, 
                       fingerY/fingerNorm];
         }
-
-
-        var finalHandLoc = [fingerX + fingerLocNorm[0]*DEPTH, fingerY + fingerLocNorm[1]*DEPTH];
-        var test = [(finalHandLoc[0]), finalHandLoc[1]]
-        var finalNormedLoc = [(finalHandLoc[0] - LEFTEDGE)/(RIGHTEDGE-LEFTEDGE), 
+	
+        var finalHandLoc = [handX + fingerLocNorm[0]*DEPTH, 
+			    handY + fingerLocNorm[1]*DEPTH];
+	var finalNormedLoc = [(finalHandLoc[0] - LEFTEDGE)/(RIGHTEDGE-LEFTEDGE), 
                   (finalHandLoc[1] - BOTTOMEDGE)/(TOPEDGE-BOTTOMEDGE)];
-
-        //console.log(test)
+	
+	finalNormedLoc = _.map(finalNormedLoc, function (v){ if(v < 0) {return 0;} 
+					    else if(v > 1) {return 1;}
+					    else return v;});
+	
         detectOrchLocCallback(finalNormedLoc);
     }
 
@@ -176,13 +197,20 @@ var dataProcessing = (function() {
                 fingerDir: fingerDir
             });
 
-            detectSelect(pointerTip, pointerSpeed, handLoc, palmDir, fingerDir);
+            detectSelect(handLoc);
 
             if(handLoc !== null && palmDir !== null) {
                 detectVolumeChange(handLoc, palmDir, time);
             }
+<<<<<<< HEAD
             detectTempoChange(pointerTip, pointerSpeed, handLoc, palmVelocity, fingerDir);
+=======
+            detectTempoChange(pointerTip, pointerSpeed, handLoc);
+>>>>>>> e15b04e15ed5582d974d4584c9ed32f13153999d
             detectOrchLoc(handLoc, fingerDir);
+        },
+        onDetectSelectChange: function(callback) {
+            detectSelectCallback = callback;
         },
         onDetectVolumeChange: function(callback) {
             detectVolumeChangeCallback = callback;
