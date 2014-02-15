@@ -9,6 +9,7 @@ var dataProcessing = (function() {
         //  }
     ]
     var lastAverageVelocity = 0;
+    var currentlyTouched = 0;
 
     detectSelectCallback = function() {
         //console.log('No select callback registered.');
@@ -66,13 +67,19 @@ var dataProcessing = (function() {
         }
     }
 
-    // Returns true if an instrumental group is selected.
-    // returns false otherwise.
+    // Calls back true if an instrumental group is selected.
+    // Calls back false othe group is deselected otherwise.
     function detectSelect(handLoc) {
-        var ZPLANE = 0; 
         if(handLoc !== null){
-            if(handLoc[2] < ZPLANE){
-                detectSelectCallback(true);     
+            var hand = frame.hands.filter(function(elem){return (elem.tools.length == 0)})[0];
+            if(hand.pointables[0].touchDistance < 0 && currentlyTouched == 0){
+                currentlyTouched = 1;
+                detectSelectCallback(true);
+            }
+            else if(hand.pointables[0].touchDistance > 0 && currentlyTouched == 1)
+            {
+                currentlyTouched = 0;
+                detectSelectCallback(false);
             }
         }
     }
