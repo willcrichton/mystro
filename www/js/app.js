@@ -137,7 +137,17 @@ $(function() {
         }
     });
 
+    function clamp(x, a, b) {
+        return Math.max(Math.min(x, b), a);
+    }
+
+    function setVolumeFill(i) {
+        var fill = clamp(gains[i].gain.value / 3 * 100, 0, 100);
+        $('.instrument:nth-child(' + (i+1) + ')').css('background-position', 'left ' + fill + '%');
+    }
+
     dataProcessing.onDetectVolumeChange(function(delta) {
+        if (isNaN(delta)) return;
 
         gains.forEach(function(node, i) {
             node.gain.value = clamp(node.gain.value + delta * 3, 0, 3.0);
@@ -147,10 +157,10 @@ $(function() {
 
     dataProcessing.onDetectOrchLoc(function(pair) {
         var x = pair[0], y = pair[1];
-        /*if (y < 0.4) {
-            $('.instrument').removeClass('hover');
-            return;
-        }*/
+
+        console.log(x, y);
+
+        $('#dot').css('left', x * $('#instruments').width());
 
         var len = $('.instrument').length;
         $('.instrument').removeClass('hover');

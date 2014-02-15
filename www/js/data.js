@@ -75,8 +75,8 @@ var dataProcessing = (function() {
 
     // Calls back true if an instrumental group is selected.
     // Calls back false othe group is deselected otherwise.
-    function detectSelect(handLoc) {
-        if(handLoc !== null){
+    function detectSelect(handLoc, hands) {
+        if(handLoc !== null && hands[0].pointables.length > 0) {
             if(hands[0].pointables[0].touchDistance < 0 && currentlyTouched == 0){
                 currentlyTouched = 1;
                 detectSelectCallback(true);
@@ -319,7 +319,7 @@ var dataProcessing = (function() {
                 fingerDir: fingerDir
             });
 
-            detectSelect(handLoc);
+            detectSelect(handLoc, hands);
 
             detectVolumeChange(handLoc, palmVelocity, time);
             detectTempoChange(pointerTip, pointerSpeed, handLoc);
