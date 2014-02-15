@@ -48,13 +48,13 @@ body {
     width: 780px;
     height: 200px;
     overflow: auto;
+    margin-left: 10px;
     /*background: url('images/orchestra.png') no-repeat center center;*/
 }
 
 .instrument {
     border-radius: 100px;
     border: 1px solid black;
-    transition: 0.2s all;
     cursor: pointer;
     padding-top: 25px;
     padding-left: 15px;
@@ -63,11 +63,20 @@ body {
     opacity: 0.5;
     float: left;
     margin-right: 20px;
+
+    background: linear-gradient(to bottom, white 50%, gray 50%);
+    background-size: 100% 200%;
+    background-position: left 33%;
+    /*transition: 0.5s all ease;*/
 }
 
-.instrument.hover {
-    /*border-color: #c71621;*/
+.instrument.hover, .instrument:hover {
     opacity: 1;
+}
+
+.instrument.active {
+    border-color: #c71621;
+    box-shadow: inset 0 0 10px #c71621;
 }
 
 .instrument:last-child {

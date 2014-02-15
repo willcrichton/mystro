@@ -101,7 +101,7 @@ $(function() {
             var gain = context.createGainNode();
             gain.connect(processor);
             source.connect(gain);
-            gain.gain.value = 0.0;
+            gain.gain.value = 1.0;
 
             sources[i] = source;
             gains[i] = gain;
@@ -137,20 +137,43 @@ $(function() {
         }
     });
 
-    dataProcessing.onDetectVolumeChange(function(delta) {
+    function clamp(x, min, max) {
+        return Math.min(Math.max(x, min), max);
+    }
 
+    function setVolumeFill(i) {
+        var fill = clamp(gains[i].gain.value / 3 * 100, 0, 100);
+        $('.instrument:nth-child(' + (i+1) + ')').css('background-position', 'left ' + fill + '%');
+    }
+
+    dataProcessing.onDetectVolumeChange(function(delta) {
+        if (isNaN(delta)) return;
+
+        gains.forEach(function(node, i) {
+            node.gain.value = clamp(node.gain.value + delta * 2, 0, 3.0);
+            setVolumeFill(i);
+        });
     });
 
     dataProcessing.onDetectOrchLoc(function(pair) {
         var x = pair[0], y = pair[1];
-        /*if (y < 0.4) {
+        if (y < 0.2) {
             $('.instrument').removeClass('hover');
             return;
-        }*/
+        }
 
         var len = $('.instrument').length;
         $('.instrument').removeClass('hover');
         //console.log(x, y, len, Math.floor(len * x));
         $($('.instrument')[Math.floor(len * x)]).addClass('hover');
+    });
+
+    dataProcessing.onDetectTempoChange(function(tempo) {
+        if (tempo === null) return;
+        console.log(tempo);
+    });
+
+    dataProcessing.onDetectSelectChange(function() {
+        //console.log('Selected!');
     });
 });

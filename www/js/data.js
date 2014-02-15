@@ -63,7 +63,7 @@ var dataProcessing = (function() {
 
     function relativeAcceleration(pointerSpeed, n){
         if(oldData.length >= n){
-            var lastn = oldData.slice(-n).filter(function(y){return y.pointerSpeed != null && (((new Date().getTime()) - y.time) < 1000)}).map(function(x){x.pointerSpeed});
+            var lastn = oldData.slice(-n).filter(function(y){return y.pointerSpeed != null && (((new Date().getTime()) - y.time) < 1000)}).map(function(x){return x.pointerSpeed});
             var avgOldSpeed = averageVector3(lastn);
             return $V(pointerSpeed).subtract($V(avgOldSpeed)).elements;
         }
@@ -76,14 +76,14 @@ var dataProcessing = (function() {
     // does not return
     function detectSelect(handLoc) {
         var ZPLANE = 0; 
-        if(handLoc != null){
+        if(handLoc !== null){
             if(handLoc[2] < ZPLANE){
                 detectSelectCallback(true);     
             }
         }
     }
 
-    var MIN_PALM_HEIGHT = 200;
+    var MIN_PALM_HEIGHT = 100;
     var MAX_PALM_HEIGHT = 400;
     function normedVol(absoluteVolDelta) {
         return absoluteVolDelta/(MAX_PALM_HEIGHT - MIN_PALM_HEIGHT);
@@ -100,7 +100,7 @@ var dataProcessing = (function() {
         if(oldData.length > 1) {
             for(var i = oldData.length-2; i >= 0; i--) {
                 var elt = oldData[i];
-                if(elt.handLoc !== null && elt.palmVelocity != null) {
+                if(elt.handLoc !== null && elt.palmVelocity !== null) {
                     if(time - elt.time > IGNORE_IF_MORE_THAN_MILLIS) {
                         return null;
                     } else {
@@ -138,6 +138,7 @@ var dataProcessing = (function() {
 
             // Linearly interpolate to guess new volume.
             var result = (time - prevTime.time)*prevGoodData.palmVelocity;
+
             detectVolumeChangeCallback(normedVol(result));
         } else {
             var moveDirection = palmVelocity[1];
@@ -149,12 +150,9 @@ var dataProcessing = (function() {
             }
             var lastHeight = lastHeightElt.handLoc[1];
             var result = null;
-            if(moveDirection > 0 && thisHeight > lastHeight) {
+            if((moveDirection > 0 && thisHeight > lastHeight) ||
+               (moveDirection < 0 && thisHeight < lastHeight)) {
                 result = thisHeight - lastHeight;
-                //console.log('up');
-            } else if(moveDirection < 0 && thisHeight < lastHeight) {
-                result = lastHeight - thisHeight;
-                //console.log('down');
             }
 
             if(result !== null) {
@@ -181,6 +179,7 @@ var dataProcessing = (function() {
     // into a tempo calculator.
     function detectTempoChange(pointerTip, pointerSpeed, handLoc){
         //Using OLD DATA or something, return if data already happened.
+
         var V_SMOOTHNESS = 4;
 	var TIMEDELAY = 400;
         if(pointerTip != null){
