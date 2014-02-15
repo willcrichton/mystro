@@ -32,8 +32,8 @@ var dataProcessing = (function() {
     }
 
     function averageVector3(vecs){
-	if(vecs.length === 0)
-	    return [0, 0, 0];
+	    if(vecs.length === 0)
+	        return [0, 0, 0];
         sum = $V([0,0,0]);
         for (var i = vecs.length - 1; i >= 0; i--) {
             sum = sum.add($V(vecs[i]));
@@ -46,10 +46,10 @@ var dataProcessing = (function() {
     function historicalAcceleration(n){
         TIMEOUT = 1000;
         if(oldData.length >= n){
-	    var lastn1 = oldData.slice(-n);
+	        var lastn1 = oldData.slice(-n);
             var lastn = oldData.slice(-n).filter(
-		function(y){return y.pointerSpeed != null && (((new Date().getTime()) - y.time) < 1000)}
-	    ).map(function(x){return x.pointerSpeed;});
+		        function(y){return y.pointerSpeed != null && (((new Date().getTime()) - y.time) < 1000)}
+	        ).map(function(x){return x.pointerSpeed;});
             var accels = [];
             for (var i = lastn.length - 1; i >= 1; i--) {
                 accels.push($V(lastn[i]).subtract($V(lastn[i-1])).elements);
@@ -132,36 +132,36 @@ var dataProcessing = (function() {
         }
 
         /*
-        if(handLoc[1] < MIN_PALM_HEIGHT || handLoc[1] > MAX_PALM_HEIGHT) {
-            // Out of range. Ignore.
-            return;
-        }
+          if(handLoc[1] < MIN_PALM_HEIGHT || handLoc[1] > MAX_PALM_HEIGHT) {
+          // Out of range. Ignore.
+          return;
+          }
         */
 
         if(palmVelocity === null || handLoc === null) {
             /*var prevGoodData = lastVolData(time);
-            if(prevGoodData === null) {
-                //console.log('No recent left hand. (null)');
-                return;
-            }
+              if(prevGoodData === null) {
+              //console.log('No recent left hand. (null)');
+              return;
+              }
 
-            var prevTime = (_.last(oldData, 2))[0];
-            if(prevTime === undefined || prevTime === null) {
-                throw new Error('sadface. need to sleep on this.');
-            }
-            if(prevTime.time > time) {
-                throw new Error('I really hope this never happens. Did it?');
-            }
+              var prevTime = (_.last(oldData, 2))[0];
+              if(prevTime === undefined || prevTime === null) {
+              throw new Error('sadface. need to sleep on this.');
+              }
+              if(prevTime.time > time) {
+              throw new Error('I really hope this never happens. Did it?');
+              }
 
-            // Linearly interpolate to guess new volume.
-            console.log('Time: ' + prevTime.time);
-            console.log('Velocity: ' + prevGoodData.palmVelocity);
-            var result = (time - prevTime.time)*prevGoodData.palmVelocity;
+              // Linearly interpolate to guess new volume.
+              console.log('Time: ' + prevTime.time);
+              console.log('Velocity: ' + prevGoodData.palmVelocity);
+              var result = (time - prevTime.time)*prevGoodData.palmVelocity;
 
-                if(_.isNaN(result)) console.log('Found result = NaN');
-                var tmp = normedVol(result);
-                if(_.isNaN(tmp)) console.log('Found normedVol = NaN');
-            detectVolumeChangeCallback(normedVol(result));
+              if(_.isNaN(result)) console.log('Found result = NaN');
+              var tmp = normedVol(result);
+              if(_.isNaN(tmp)) console.log('Found normedVol = NaN');
+              detectVolumeChangeCallback(normedVol(result));
             */
         } else {
             if(handLoc[1] < MIN_PALM_HEIGHT || handLoc[1] > MAX_PALM_HEIGHT) {
@@ -193,39 +193,58 @@ var dataProcessing = (function() {
     }
     // NOT ACTUALLY A DOT PRODUCT
     function dotP(a, b){
-	var A = 1.5
-	var B = 0.6
-	return A*a[0]*b[0] + B*a[1]*b[1] + a[2]+b[2];
+	    var A = 1.5
+	    var B = 0.6
+	    return A*a[0]*b[0] + B*a[1]*b[1] + a[2]+b[2];
     }
     
     function cosine(a,b){
-	if(a === [0,0,0] || b === [0,0,0])
-	    return 0;
-	return dotP(a,b)/(magnitude3(a)*magnitude3(b))
+	    if(a === [0,0,0] || b === [0,0,0])
+	        return 0;
+	    return dotP(a,b)/(magnitude3(a)*magnitude3(b))
     }
 
     // Calls the callback function if current state is a beat.
     // CURRENTLY BUGGY: PATRICK TODO: Use a globa and wrap this function
     // into a tempo calculator.
-    function detectTempoChange(pointerTip, pointerSpeed, handLoc){
+    var NUM_FRAMES = 25;
+    var TIME_DELAY = 350;
+    var BEAT_THRESHOLD = -7000;
+    var lastSpeeds = [];
+    function detectTempoChange(pointerTip, pointerSpeed){
         //Using OLD DATA or something, return if data already happened.
 
-        var V_SMOOTHNESS = 4;
-	var TIMEDELAY = 400;
+        /*var V_SMOOTHNESS = 4;
+	    var TIMEDELAY = 400;
         if(pointerTip != null){
             var oldvs = oldData.slice(-V_SMOOTHNESS).
-		filter(function(x){return x.pointerSpeed != null;}).
-		map(function(y){return y.pointerSpeed});
+		        filter(function(x){return x.pointerSpeed != null;}).
+		        map(function(y){return y.pointerSpeed});
             var avgVel = averageVector3(oldvs);
             var beatSign = dotP([avgVel[0], avgVel[1], 0], [pointerSpeed[0], pointerSpeed[1], 0]);
 
-	    if(beatSign < -7000
-		&& (new Date().getTime() - lastBeatTime)> TIMEDELAY){
-		detectTempoChangeCallback(true);
-		//console.log("beat");
-		lastBeatTime = (new Date().getTime())
+	        if(beatSign < -7000
+		       && (new Date().getTime() - lastBeatTime)> TIMEDELAY){
+		        detectTempoChangeCallback(true);
+		        //console.log("beat");
+		        lastBeatTime = (new Date().getTime())
             }
-           lastAverageVelocity = avgVel;
+            lastAverageVelocity = avgVel;
+        }*/
+        
+        if (pointerTip === null) return;
+        lastSpeeds.push(pointerSpeed);
+        
+        if (lastSpeeds.length >= NUM_FRAMES) {
+            lastSpeeds.shift();
+        }
+        
+        var oldAvg = averageVector3(lastSpeeds.slice(Math.floor(NUM_FRAMES / 5)));
+
+        var beat = dotP([oldAvg[0], oldAvg[1], 0], [pointerSpeed[0], pointerSpeed[1], 0]);
+	    if(beat < BEAT_THRESHOLD && (new Date().getTime() - lastBeatTime) > TIME_DELAY){
+		    detectTempoChangeCallback(true);
+		    lastBeatTime = (new Date().getTime())
         }
     }
 
@@ -259,10 +278,10 @@ var dataProcessing = (function() {
         var TOPEDGE = 450;
         var DEPTH =  50;         //variable
 
-       // Ignore out of place places, since the front end will 
-       // display exactly what we want (unchanged).
+        // Ignore out of place places, since the front end will 
+        // display exactly what we want (unchanged).
         if(handLoc === null || (handLoc[0] < LEFTEDGE || handLoc[0] > RIGHTEDGE)
-	   || (handLoc[1] < BOTTOMEDGE || handLoc[1] > TOPEDGE)){
+	       || (handLoc[1] < BOTTOMEDGE || handLoc[1] > TOPEDGE)){
             return;
         }
         var handX = handLoc[0];
@@ -282,17 +301,17 @@ var dataProcessing = (function() {
         else{
             var fingerLocNorm = [fingerX/fingerNorm, fingerY/fingerNorm];
         }
-    
+        
         var finalHandLoc = [handX + fingerLocNorm[0]*DEPTH, 
                             handY + fingerLocNorm[1]*DEPTH];
 
         var finalNormedLoc = [(finalHandLoc[0] - LEFTEDGE)/(RIGHTEDGE-LEFTEDGE), 
                               (finalHandLoc[1] - BOTTOMEDGE)/(TOPEDGE-BOTTOMEDGE)];
-    
-        finalNormedLoc = _.map(finalNormedLoc, function (v){ if(v < 0) {return 0;} 
-							     else if(v > 1) {return 0.99;}
-							     else return v;});
-    
+        
+        finalNormedLoc = _.map(finalNormedLoc, 
+                               function (v){ if(v < 0) {return 0;} 
+							                 else if(v > 1) {return 0.99;}
+							                 else return v;});
         detectOrchLocCallback(finalNormedLoc);
     }
 

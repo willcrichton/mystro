@@ -64,7 +64,7 @@ $(function() {
         return x;
     };
 
-    var sounds = ['zelda1.wav', 'zelda2.wav', 'zelda3.wav', 'zelda4.wav'];
+    var sounds = ['beethoven.mp3']; //['zelda1.wav', 'zelda2.wav', 'zelda3.wav', 'zelda4.wav'];
     var buffers = [];
     var sources = [];
     var gains = [];
@@ -94,6 +94,9 @@ $(function() {
         counter++;
         if (counter != sounds.length) return;
 
+        console.log('Buffer loaded...');
+        $('#play').fadeIn();
+
         buffers.forEach(function(buffer, i) {
             var source = context.createBufferSource();
             source.buffer = buffer;
@@ -101,7 +104,7 @@ $(function() {
             var gain = context.createGainNode();
             gain.connect(processor);
             source.connect(gain);
-            gain.gain.value = 0.0;
+            gain.gain.value = 1.0;
 
             sources[i] = source;
             gains[i] = gain;
@@ -127,7 +130,7 @@ $(function() {
         });
     });
 
-    $(document).click(function() {
+    /*    $(document).click(function() {
         if ($('#main').is(':visible')) {
             var inc = 0.5;
             pitchShift *= 0.3;
@@ -135,7 +138,7 @@ $(function() {
                 source.playbackRate.value += inc;
             });
         }
-    });
+    });*/
 
     function clamp(x, a, b) {
         return Math.max(Math.min(x, b), a);
@@ -168,7 +171,7 @@ $(function() {
 
     var time = new Date().getTime();
     var frames = [];
-    var NUM_FRAMES = 5;
+    var NUM_FRAMES = 3;
     dataProcessing.onDetectTempoChange(function() {
         var cur = new Date().getTime();
 
@@ -182,11 +185,16 @@ $(function() {
         });
 
         avg /= frames.length;
-
-        //console.log(avg, frames);
+        avg /= 92;
 
         sources.forEach(function(source) {
-            //source.playbackRate.value = avg / 72;
+            var oldRate = source.playbackRate.value;
+
+            if (Math.abs(oldRate - avg) > 0.3) {
+                console.log(avg);
+                source.playbackRate.value = avg;
+                pitchShift = 0.33 * (2 - oldRate);
+            }
         });
     });
 
