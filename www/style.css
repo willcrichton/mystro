@@ -7,6 +7,7 @@ body {
 }
 
 #play {
+    display: none;
     position: absolute;
     top: 0; left: 0; bottom: 0; right: 0;
     margin: auto;
@@ -44,11 +45,22 @@ body {
     margin-bottom: 20px;
 }
 
+#dot {
+    width: 5px;
+    height: 5px;
+    background: #c71621;
+    border-radius: 10px;
+    position: absolute;
+    left: 0;
+    bottom: 0;
+}
+
 #instruments {
-    width: 780px;
+    width: 790px;
     height: 200px;
     overflow: auto;
     margin-left: 10px;
+    position: relative;
     /*background: url('images/orchestra.png') no-repeat center center;*/
 }
 

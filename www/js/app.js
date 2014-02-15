@@ -110,7 +110,7 @@ $(function() {
                 var fingerDir = null;
             }
 
-            dataProcessing.pushData(pointerTip, pointerSpeed, handLoc, palmVelocity, fingerDir);
+            dataProcessing.pushData(hands, pointerTip, pointerSpeed, handLoc, palmVelocity, fingerDir);
         }
     });
     ctl.connect();
@@ -141,7 +141,7 @@ $(function() {
         return x;
     };
 
-    var sounds = ['zelda1.wav', 'zelda2.wav', 'zelda3.wav', 'zelda4.wav'];
+    var sounds = ['beethoven.mp3']; //['zelda1.wav', 'zelda2.wav', 'zelda3.wav', 'zelda4.wav'];
     var buffers = [];
     var sources = [];
     var gains = [];
@@ -170,6 +170,9 @@ $(function() {
 
         counter++;
         if (counter != sounds.length) return;
+
+        console.log('Buffer loaded...');
+        $('#play').fadeIn();
 
         buffers.forEach(function(buffer, i) {
             var source = context.createBufferSource();
@@ -204,7 +207,7 @@ $(function() {
         });
     });
 
-    $(document).click(function() {
+    /*    $(document).click(function() {
         if ($('#main').is(':visible')) {
             var inc = 0.5;
             pitchShift *= 0.3;
@@ -212,10 +215,10 @@ $(function() {
                 source.playbackRate.value += inc;
             });
         }
-    });
+    });*/
 
-    function clamp(x, min, max) {
-        return Math.min(Math.max(x, min), max);
+    function clamp(x, a, b) {
+        return Math.max(Math.min(x, b), a);
     }
 
     function setVolumeFill(i) {
@@ -234,10 +237,8 @@ $(function() {
 
     dataProcessing.onDetectOrchLoc(function(pair) {
         var x = pair[0], y = pair[1];
-        if (y < 0.2) {
-            $('.instrument').removeClass('hover');
-            return;
-        }
+
+        $('#dot').css('left', x * $('#instruments').width());
 
         var len = $('.instrument').length;
         $('.instrument').removeClass('hover');
@@ -245,13 +246,41 @@ $(function() {
         $($('.instrument')[Math.floor(len * x)]).addClass('hover');
     });
 
-    dataProcessing.onDetectTempoChange(function(tempo) {
-        if (tempo === null) return;
-        console.log(tempo);
+    var time = new Date().getTime();
+    var frames = [];
+    var NUM_FRAMES = 3;
+    dataProcessing.onDetectTempoChange(function() {
+        var cur = new Date().getTime();
+
+        if (frames.length == NUM_FRAMES) frames.pop();
+        frames.unshift(1 / (cur - time) * 1000 * 60);
+        time = cur;
+
+        var avg = 0;
+        frames.forEach(function(bpm) {
+            avg += bpm;
+        });
+
+        avg /= frames.length;
+        avg /= 92;
+
+        sources.forEach(function(source) {
+            var oldRate = source.playbackRate.value;
+
+            if (Math.abs(oldRate - avg) > 0.3) {
+                console.log(avg);
+                source.playbackRate.value = avg;
+                pitchShift = 0.33 * (2 - oldRate);
+            }
+        });
     });
 
-    dataProcessing.onDetectSelectChange(function() {
-        //console.log('Selected!');
+    dataProcessing.onDetectSelectChange(function(down) {
+        if (down) {
+            $('.instrument.hover').addClass('active');
+        } else {
+            $('.instrument').removeClass('active');
+        }
     });
 
 
