@@ -40,8 +40,9 @@ var dataProcessing = (function() {
     // Use OLD DATA to caluate an average acceleration over the previous
     // n iterations.
     function historicalAcceleration(n){
+        TIMEOUT = 1000;
         if(oldData.length >= n){
-            var lastn = oldData.slice(-n).map(function(x){x.pointerSpeed});
+            var lastn = oldData.slice(-n).filter(function(y){return x.pointerSpeed != null && (((new Date().getTime()) - x.time) < 1000)}).map(function(x){x.pointerSpeed});
             var accels = [];
             for (var i = lastn.length - 1; i >= 1; i--) {
                 accels.push($V(lastn[i]).subtract($V(lastn[i-1])).elements);
@@ -56,7 +57,7 @@ var dataProcessing = (function() {
 
     function relativeAcceleration(pointerSpeed, n){
         if(oldData.length >= n){
-            var lastn = oldData.slice(-n).map(function(x){x.pointerSpeed});
+            var lastn = oldData.slice(-n).filter(function(y){return x.pointerSpeed != null && (((new Date().getTime()) - x.time) < 1000)}).map(function(x){x.pointerSpeed});
             var avgOldSpeed = averageVector3(lastn);
             return $V(pointerSpeed).subtract($V(avgOldSpeed)).elements;
         }
@@ -171,7 +172,7 @@ var dataProcessing = (function() {
                 console.log("beat");
             }
             lastAverageVelocity = avgVel;
-            lastBeatTime = 
+            //lastBeatTime = 
         }
         detectTempoChangeCallback(null);
     }
