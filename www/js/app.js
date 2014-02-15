@@ -24,13 +24,14 @@ $(function() {
                                hands[0].sphereCenter[1] - hands[0].palmPosition[1],
                                hands[0].sphereCenter[2] - hands[0].palmPosition[2]];
                 //var palmDir = hands[0].palmNormal;
-                var palmVelocity = hand.palmVelocity
+                var palmVelocity = hands[0].palmVelocity;
                 var fingerDir = hands[0].direction;
             }
             else
             {
                 var handLoc = null;
                 var palmDir = null;
+                var palmVelocity = null;
                 var fingerDir = null;
             }
 

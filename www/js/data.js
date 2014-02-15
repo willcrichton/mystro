@@ -32,12 +32,12 @@ var dataProcessing = (function() {
     // Returns true if an instrumental group is selected.
     // returns false otherwise.
     function detectSelect(handLoc) {
-	var ZPLANE = 0; 
-	if(handLoc != null){
-	    if(handLoc[2] < ZPLANE){
-		detectSelectCallback(true);		
-	    }
-	}
+        var ZPLANE = 0; 
+        if(handLoc != null){
+            if(handLoc[2] < ZPLANE){
+            detectSelectCallback(true);		
+            }
+        }
     }
 
     var MIN_PALM_HEIGHT = 200;
@@ -49,12 +49,21 @@ var dataProcessing = (function() {
     // Gets the last non-null pair of palmVelocity and handLoc to interpolate 
     // in detectVolumeChange. This could be two functions, one for handLoc and
     // one for palmVelocity, but I think it's rare that we can get one but not
-    // the other.
-    function lastVolData() {
-        for(var i = oldData.length; i >= 0; i++) {
-            var elt = oldData[i];
-            if(elt.handLoc !== null && elt.palmVelocity != null) {
-                return elt;
+    // the other. To be clear, this get's a pair previous in time: the last 
+    // element of oldData is actually the current data, so ignore that one.
+    // Also checks that the data is 'recent enough'.
+    function lastVolData(time) {
+        var IGNORE_IF_MORE_THAN_MILLIS = 1000;
+        if(oldData.length > 1) {
+            for(var i = oldData.length-2; i >= 0; i--) {
+                var elt = oldData[i];
+                if(elt.handLoc !== null && elt.palmVelocity != null) {
+                    if(time - elt.time > IGNORE_IF_MORE_THAN_MILLIS) {
+                        return null;
+                    } else {
+                        return elt;
+                    }
+                }
             }
         }
         return null;
@@ -70,11 +79,12 @@ var dataProcessing = (function() {
         }
 
         if(palmVelocity === null || handLoc === null) {
-            var prevGoodData = lastVolData();
+            var prevGoodData = lastVolData(time);
             if(prevGoodData === null) {
-                console.log('No previous left hand.');
+                //console.log('No recent left hand. (null)');
                 return;
             }
+
             var prevTime = (_.last(oldData, 2))[0];
             if(prevTime === undefined || prevTime === null) {
                 throw new Error('sadface. need to sleep on this.');
@@ -89,22 +99,23 @@ var dataProcessing = (function() {
         } else {
             var moveDirection = palmVelocity[1];
             var thisHeight = handLoc[1];
-            var lastHeightElt = getLastHeight();
+            var lastHeightElt = lastVolData(time);
             if(lastHeightElt === null) {
-                console.log('No previous left hand.');
+                //console.log('No recent left hand. (no lastHeightElt)');
                 return;
             }
-
+            var lastHeight = lastHeightElt.handLoc[1];
             var result = null;
             if(moveDirection > 0 && thisHeight > lastHeight) {
                 result = thisHeight - lastHeight;
-                console.log('up');
+                //console.log('up');
             } else if(moveDirection < 0 && thisHeight < lastHeight) {
                 result = lastHeight - thisHeight;
-                console.log('down');
+                //console.log('down');
             }
 
             if(result !== null) {
+                //console.log(thisHeight - lastHeight);
                 detectVolumeChangeCallback(normedVol(result));
             }
         }
@@ -183,30 +194,27 @@ var dataProcessing = (function() {
         // pointerTip : array 0..2
         // pointerSpeed : int
         // handLoc : array 0..2
-        // palmDir : array 0..2 (normalized)
+        // palmVelocity : array 0..2 (normalized)
         // fingerDir : array 0..2 (normalized)
         // For each input, no data if null
-        pushData: function(pointerTip, pointerSpeed, handLoc, palmDir, fingerDir) {
+        pushData: function(pointerTip, pointerSpeed, handLoc, palmVelocity, fingerDir) {
             time = (new Date()).getTime();
             oldData.push({
                 time: time,
                 pointerTip: pointerTip,
                 pointerSpeed: pointerSpeed, 
                 handLoc: handLoc, 
-                palmDir: palmDir,
+                palmVelocity: palmVelocity,
                 fingerDir: fingerDir
             });
 
             detectSelect(handLoc);
 
-            if(handLoc !== null && palmDir !== null) {
-                detectVolumeChange(handLoc, palmDir, time);
+            if(palmVelocity === undefined) {
+                console.log('asdlkjffffff');
             }
-<<<<<<< HEAD
-            detectTempoChange(pointerTip, pointerSpeed, handLoc, palmVelocity, fingerDir);
-=======
+            detectVolumeChange(handLoc, palmVelocity, time);
             detectTempoChange(pointerTip, pointerSpeed, handLoc);
->>>>>>> e15b04e15ed5582d974d4584c9ed32f13153999d
             detectOrchLoc(handLoc, fingerDir);
         },
         onDetectSelectChange: function(callback) {
