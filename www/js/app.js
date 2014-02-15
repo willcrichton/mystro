@@ -158,8 +158,6 @@ $(function() {
     dataProcessing.onDetectOrchLoc(function(pair) {
         var x = pair[0], y = pair[1];
 
-        //console.log(x, y);
-
         $('#dot').css('left', x * $('#instruments').width());
 
         var len = $('.instrument').length;
@@ -192,7 +190,11 @@ $(function() {
         });
     });
 
-    dataProcessing.onDetectSelectChange(function() {
-        //console.log('Selected!');
+    dataProcessing.onDetectSelectChange(function(down) {
+        if (down) {
+            $('.instrument.hover').addClass('active');
+        } else {
+            $('.instrument').removeClass('active');
+        }
     });
 });
