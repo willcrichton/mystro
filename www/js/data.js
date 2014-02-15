@@ -30,80 +30,79 @@ var dataProcessing = (function() {
         // This doesn't have callbacks registered.
     }
 
-
-    // Detects whether the palm is facing up, down, or in between. Returns one of
-    // 'up', 'down', or 'unknown'
-    function palmDirType(palmDir) {
-        var UP_PALM_THRESHOLD = .8;
-        var DOWN_PALM_THRESHOLD = -.8;
-        if(palmDir === null || palmDir === undefined) {
-            throw new Error('There isn\'t a palmDir!');
-        }
-        // Negatively correlated with pointing anywhere
-        var mag = magnitude3(palmDir);
-        // Positively correlated with pointing up
-        var upmag = palmDir[1];
-
-        if(mag === 0.0) {
-            console.log('Zero magnitude ball! Wow! Alert Philip!');
-            if(upmag > 0) {
-                return 'up';
-            } else if(upmag < 0) {
-                return 'down';
-            } else {
-                return 'unknown';
-            }
-        } else {
-            var upness = upmag/mag;
-            //console.log('upness = ' + upness);
-            if(upness > UP_PALM_THRESHOLD) {
-                return 'up';
-            } else if(upness < DOWN_PALM_THRESHOLD) {
-                return 'down';
-            } else {
-                return 'unknown';
-            }
-        }
-    }
-
     var MIN_PALM_HEIGHT = 200;
     var MAX_PALM_HEIGHT = 400;
     function normedVol(absoluteVolDelta) {
         return absoluteVolDelta/(MAX_PALM_HEIGHT - MIN_PALM_HEIGHT);
     }
 
-    // Returns change in volume, from -1.0 to 1.0.
-    function detectVolumeChange(handLoc, palmDir) {
-        if(palmDir === undefined) {
-            throw new Error('There isn\'t a palmDir!');
+    // Gets the last non-null pair of palmVelocity and handLoc to interpolate 
+    // in detectVolumeChange. This could be two functions, one for handLoc and
+    // one for palmVelocity, but I think it's rare that we can get one but not
+    // the other.
+    function lastVolData() {
+        for(var i = oldData.length; i >= 0; i++) {
+            var elt = oldData[i];
+            if(elt.handLoc !== null && elt.palmVelocity != null) {
+                return elt;
+            }
         }
-        //if(handLoc === null) TODO
-        //if(palmDir === null) TODO
-        wheresItPointing = palmDirType(palmDir);
+        return null;
+    }
 
-        var thisHeightAndTheLastHeight = _.last(oldData, 2);
-        var lastHeight = (thisHeightAndTheLastHeight[0])[1];
-        var thisHeight = handLoc[1];
-        var result = null;
-        if(wheresItPointing === 'up') {
-            if(thisHeight > lastHeight) {
+    // Returns change in volume, from -1.0 to 1.0.
+    function detectVolumeChange(handLoc, palmVelocity, time) {
+        if(palmVelocity === undefined) {
+            throw new Error('palmVelocity is undefined!');
+        }
+        if(handLoc === undefined) {
+            throw new Error('handLoc is undefined!');
+        }
+
+        if(palmVelocity === null || handLoc === null) {
+            var prevGoodData = lastVolData();
+            if(prevGoodData === null) {
+                console.log('No previous left hand.');
+                return;
+            }
+            var prevTime = (_.last(oldData, 2))[0];
+            if(prevTime === undefined || prevTime === null) {
+                throw new Error('sadface. need to sleep on this.');
+            }
+            if(prevTime.time > time) {
+                throw new Error('I really hope this never happens. Did it?');
+            }
+
+            // Linearly interpolate to guess new volume.
+            var result = (time - prevTime.time)*prevGoodData.palmVelocity;
+            detectVolumeChangeCallback(normedVol(result));
+        } else {
+            var moveDirection = palmVelocity[1];
+            var thisHeight = handLoc[1];
+            var lastHeightElt = getLastHeight();
+            if(lastHeightElt === null) {
+                console.log('No previous left hand.');
+                return;
+            }
+
+            var result = null;
+            if(moveDirection > 0 && thisHeight > lastHeight) {
                 result = thisHeight - lastHeight;
                 console.log('up');
-            }
-        } else if(wheresItPointing === 'down') {
-            if(thisHeight < lastHeight) {
+            } else if(moveDirection < 0 && thisHeight < lastHeight) {
                 result = lastHeight - thisHeight;
                 console.log('down');
             }
-        }
-        //if(result === null) {console.log('n');}
 
-        detectVolumeChangeCallback(normedVol(result));
+            if(result !== null) {
+                detectVolumeChangeCallback(normedVol(result));
+            }
+        }
     }
 
 
     // Returns an absolute or relative change in tempo.
-    function detectTempoChange(pointerTip, pointerSpeed, handLoc, palmDir, fingerDir) {
+    function detectTempoChange(pointerTip, pointerSpeed, handLoc, palmVelocity, fingerDir) {
         detectTempoChangeCallback(null);
     }
 
@@ -180,9 +179,9 @@ var dataProcessing = (function() {
             detectSelect(pointerTip, pointerSpeed, handLoc, palmDir, fingerDir);
 
             if(handLoc !== null && palmDir !== null) {
-                detectVolumeChange(handLoc, palmDir);
+                detectVolumeChange(handLoc, palmDir, time);
             }
-            detectTempoChange(pointerTip, pointerSpeed, handLoc, palmDir, fingerDir);
+            detectTempoChange(pointerTip, pointerSpeed, handLoc, palmVelocity, fingerDir);
             detectOrchLoc(handLoc, fingerDir);
         },
         onDetectVolumeChange: function(callback) {

@@ -24,6 +24,7 @@ $(function() {
                                hands[0].sphereCenter[1] - hands[0].palmPosition[1],
                                hands[0].sphereCenter[2] - hands[0].palmPosition[2]];
                 //var palmDir = hands[0].palmNormal;
+                var palmVelocity = hand.palmVelocity
                 var fingerDir = hands[0].direction;
             }
             else
@@ -39,7 +40,7 @@ $(function() {
             //    deltaDisplay.innerText = "(" + (tipPosition[0] - stabilizedPosition[0]) + ", "
             //        + (tipPosition[1] - stabilizedPosition[1]) + ", "
             //        + (tipPosition[2] - stabilizedPosition[2]) + ")";
-            dataProcessing.pushData(pointerTip, pointerSpeed, handLoc, palmDir, fingerDir);
+            dataProcessing.pushData(pointerTip, pointerSpeed, handLoc, palmVelocity, fingerDir);
         }
         
     });
