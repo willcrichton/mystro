@@ -9,6 +9,7 @@ var dataProcessing = (function() {
         //  }
     ]
     var lastAverageVelocity = 0;
+    var lastBeatTime = 0;
 
     detectSelectCallback = function() {
         //console.log('No select callback registered.');
@@ -30,6 +31,8 @@ var dataProcessing = (function() {
     }
 
     function averageVector3(vecs){
+	if(vecs.length === 0)
+	    return [0, 0, 0];
         sum = $V([0,0,0]);
         for (var i = vecs.length - 1; i >= 0; i--) {
             sum = sum.add($V(vecs[i]));
@@ -42,7 +45,10 @@ var dataProcessing = (function() {
     function historicalAcceleration(n){
         TIMEOUT = 1000;
         if(oldData.length >= n){
-            var lastn = oldData.slice(-n).filter(function(y){return x.pointerSpeed != null && (((new Date().getTime()) - x.time) < 1000)}).map(function(x){x.pointerSpeed});
+	    var lastn1 = oldData.slice(-n);
+            var lastn = oldData.slice(-n).filter(
+		function(y){return y.pointerSpeed != null && (((new Date().getTime()) - y.time) < 1000)}
+	    ).map(function(x){return x.pointerSpeed;});
             var accels = [];
             for (var i = lastn.length - 1; i >= 1; i--) {
                 accels.push($V(lastn[i]).subtract($V(lastn[i-1])).elements);
@@ -57,7 +63,7 @@ var dataProcessing = (function() {
 
     function relativeAcceleration(pointerSpeed, n){
         if(oldData.length >= n){
-            var lastn = oldData.slice(-n).filter(function(y){return x.pointerSpeed != null && (((new Date().getTime()) - x.time) < 1000)}).map(function(x){x.pointerSpeed});
+            var lastn = oldData.slice(-n).filter(function(y){return y.pointerSpeed != null && (((new Date().getTime()) - y.time) < 1000)}).map(function(x){x.pointerSpeed});
             var avgOldSpeed = averageVector3(lastn);
             return $V(pointerSpeed).subtract($V(avgOldSpeed)).elements;
         }
@@ -157,24 +163,41 @@ var dataProcessing = (function() {
             }
         }
     }
+    // NOT ACTUALLY A DOT PRODUCT
+    function dotP(a, b){
+	var A = 1.5
+	var B = 0.6
+	return A*a[0]*b[0] + B*a[1]*b[1] + a[2]+b[2];
+    }
     
-    // Returns whether the current state is a beat.
+    function cosine(a,b){
+	if(a === [0,0,0] || b === [0,0,0])
+	    return 0;
+	return dotP(a,b)/(magnitude3(a)*magnitude3(b))
+    }
+
+    // Calls the callback function if current state is a beat.
+    // CURRENTLY BUGGY: PATRICK TODO: Use a globa and wrap this function
+    // into a tempo calculator.
     function detectTempoChange(pointerTip, pointerSpeed, handLoc){
         //Using OLD DATA or something, return if data already happened.
-        var V_SMOOTHNESS = 3
-	console.log(historicalAcceleration(6));
+        var V_SMOOTHNESS = 4;
+	var TIMEDELAY = 400;
         if(pointerTip != null){
-            var oldvs = oldData.slice(-V_SMOOTHNESS).map(function(y){return y.pointerSpeed});
-            //console.log(oldData.slice(-V_SMOOTHNESS).map(function(y){return y}));
+            var oldvs = oldData.slice(-V_SMOOTHNESS).
+		filter(function(x){return x.pointerSpeed != null;}).
+		map(function(y){return y.pointerSpeed});
             var avgVel = averageVector3(oldvs);
-            //console.log(avgVel[1]);
-            if(avgVel[1] > 0 && lastAverageVelocity[1] <= 0){
-                //This is a beat
-                console.log("beat");
+            var beatSign = dotP([avgVel[0], avgVel[1], 0], [pointerSpeed[0], pointerSpeed[1], 0]);
+
+	    if(beatSign < -7000
+		&& (new Date().getTime() - lastBeatTime)> TIMEDELAY){
+		detectTempoChangeCallback(true);
+		//console.log("beat");
+		lastBeatTime = (new Date().getTime())
             }
-            lastAverageVelocity = avgVel;
+           lastAverageVelocity = avgVel;
         }
-        detectTempoChangeCallback(null);
     }
 
     // Helper for detectOrchLoc (Not used as of saturday morning)
