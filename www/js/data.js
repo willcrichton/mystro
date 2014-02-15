@@ -42,7 +42,7 @@ var dataProcessing = (function() {
     function historicalAcceleration(n){
         TIMEOUT = 1000;
         if(oldData.length >= n){
-            var lastn = oldData.slice(-n).filter(function(y){return x.pointerSpeed != null && (((new Date().getTime()) - x.time) < 1000)}).map(function(x){x.pointerSpeed});
+            var lastn = oldData.slice(-n).filter(function(y){return x.pointerSpeed !== null && (((new Date().getTime()) - x.time) < 1000)}).map(function(x){x.pointerSpeed});
             var accels = [];
             for (var i = lastn.length - 1; i >= 1; i--) {
                 accels.push($V(lastn[i]).subtract($V(lastn[i-1])).elements);
@@ -57,7 +57,7 @@ var dataProcessing = (function() {
 
     function relativeAcceleration(pointerSpeed, n){
         if(oldData.length >= n){
-            var lastn = oldData.slice(-n).filter(function(y){return x.pointerSpeed != null && (((new Date().getTime()) - x.time) < 1000)}).map(function(x){x.pointerSpeed});
+            var lastn = oldData.slice(-n).filter(function(y){return x.pointerSpeed !== null && (((new Date().getTime()) - x.time) < 1000)}).map(function(x){x.pointerSpeed});
             var avgOldSpeed = averageVector3(lastn);
             return $V(pointerSpeed).subtract($V(avgOldSpeed)).elements;
         }
@@ -70,7 +70,7 @@ var dataProcessing = (function() {
     // returns false otherwise.
     function detectSelect(handLoc) {
         var ZPLANE = 0; 
-        if(handLoc != null){
+        if(handLoc !== null){
             if(handLoc[2] < ZPLANE){
                 detectSelectCallback(true);     
             }
@@ -94,7 +94,7 @@ var dataProcessing = (function() {
         if(oldData.length > 1) {
             for(var i = oldData.length-2; i >= 0; i--) {
                 var elt = oldData[i];
-                if(elt.handLoc !== null && elt.palmVelocity != null) {
+                if(elt.handLoc !=== null && elt.palmVelocity !== null) {
                     if(time - elt.time > IGNORE_IF_MORE_THAN_MILLIS) {
                         return null;
                     } else {
@@ -160,7 +160,7 @@ var dataProcessing = (function() {
     function detectTempoChange(pointerTip, pointerSpeed, handLoc){
         //Using OLD DATA or something, return if data already happened.
         var V_SMOOTHNESS = 3
-        if(pointerTip != null){
+        if(pointerTip !== null){
             var oldvs = oldData.slice(-V_SMOOTHNESS).map(function(y){return y.pointerSpeed});
             //console.log(oldData.slice(-V_SMOOTHNESS).map(function(y){return y}));
             var avgVel = averageVector3(oldvs);
