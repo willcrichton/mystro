@@ -39,10 +39,10 @@ $(function() {
             //    deltaDisplay.innerText = "(" + (tipPosition[0] - stabilizedPosition[0]) + ", "
             //        + (tipPosition[1] - stabilizedPosition[1]) + ", "
             //        + (tipPosition[2] - stabilizedPosition[2]) + ")";
-        } else {
-            throw new Error('Dillon fix this.');
+            dataProcessing.pushData(pointerTip, pointerSpeed, handLoc, palmDir, fingerDir);
+            pushData(pointerTip, pointerSpeed, handLoc, palmDir, fingerDir);
         }
-        dataProcessing.pushData(pointerTip, pointerSpeed, handLoc, palmDir, fingerDir);
+        
     });
     ctl.connect();
     
