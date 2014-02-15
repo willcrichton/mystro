@@ -94,7 +94,7 @@ var dataProcessing = (function() {
         var LEFTEDGE = -300; 
         var BOTTOMEDGE = 200;
         var TOPEDGE = 400;
-        var DEPTH =  50;         //variable
+        var DEPTH =  20;         //variable
 
         // USE OLD DATA 
         if(handLoc === null){
@@ -111,17 +111,20 @@ var dataProcessing = (function() {
         var fingerY = fingerDir[1];
         var fingerNorm = Math.sqrt(fingerX*fingerX + fingerY*fingerY);
         if(fingerNorm === 0){
-            var fingerLocNorm = 0;
+            var fingerLocNorm = [0,0];
         }
         else{
             var fingerLocNorm = [fingerX/fingerNorm, 
                       fingerY/fingerNorm];
         }
 
-        var finalHandLoc = [fingerX + fingerLocNorm*DEPTH, fingerY + fingerLocNorm*DEPTH];
-        var finalNormedLoc = [(finalHandLoc[0] - LEFTEDGE)/(RIGHTEDGE-LEFTEDGE), 
+
+        var finalHandLoc = [fingerX + fingerLocNorm[0]*DEPTH, fingerY + fingerLocNorm[1]*DEPTH];
+	var test = [(finalHandLoc[0]), finalHandLoc[1]]
+	var finalNormedLoc = [(finalHandLoc[0] - LEFTEDGE)/(RIGHTEDGE-LEFTEDGE), 
                   (finalHandLoc[1] - BOTTOMEDGE)/(TOPEDGE-BOTTOMEDGE)];
 
+	console.log(test)
         detectOrchLocCallback(finalNormedLoc);
     }
 
