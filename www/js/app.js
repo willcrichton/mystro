@@ -12,10 +12,29 @@ $(function() {
         return 46920 + parseInt((65535-46920)*normalizedValue);
     }
 
+    // What message do we send next?
+    var nextURL = null;
+    var nextData = null;
+
+    // When did we last send a message?
+    var lastMessage = 0;
+
+    // How long (in milliseconds) to wait in between messages
+    var MIN_INTERVAL = 100;
+
     function sendToHue(URL, lightData) {
+        nextURL = URL;
+        nextData = lightData;
+    }
+
+    window.setInterval(function() {
+        if(nextURL === null || nextData === null) {
+            return;
+        }
+
         if(window.XMLHttpRequest) {
             var http = new XMLHttpRequest();
-            http.open('PUT', URL, true);
+            http.open('PUT', nextURL, true);
 
             http.onreadystatechange = function() {
                 if(http.readyState == 4) {
@@ -29,18 +48,17 @@ $(function() {
                     console.log(response);
                 }
             }
-            http.send(JSON.stringify(lightData));
+            http.send(JSON.stringify(nextData));
             console.log('sent http request');
         }
-    }
-
+        nextURL = null;
+        nextData = null;
+    }, MIN_INTERVAL);
 
     Hue = {
         // An object with keys like 'hue', 'bri', 'sat'...
         send: function(newData) { 
-            //for(var i = 1; i <= 3; i++) {
-                sendToHue(hueURL(null), newData);
-            //}
+            sendToHue(hueURL(null), newData);
         },
         // Integer in [0, \infty)
         setTransTime: function(time) {
@@ -70,12 +88,20 @@ $(function() {
             this.send({
                 'sat': saturation
             });
+        },
+        // Initialize with our favorite settings
+        setup: function() {
+            this.setTransTime(0);
+            this.setBrightness(180);
+            this.setColor(0);
+            this.setSat(220);
         }
     };
 });
 
 
 $(function() {
+    Hue.setup();
     var ctl = new Leap.Controller({enableGestures: true});
 
     ctl.on('frame', function(frame){
@@ -273,6 +299,9 @@ $(function() {
                 pitchShift = 0.33 * (2 - oldRate);
             }
         });
+
+        // Convert the current tempo to [0.0, 1.0] and set that to the color
+        Hue.setColor(frames[0]/250);
     });
 
     dataProcessing.onDetectSelectChange(function(down) {
