@@ -12,7 +12,6 @@ var dataProcessing = (function() {
     detectSelectCallback = function() {
         //console.log('No select callback registered.');
     }
-
     detectVolumeChangeCallback = function() {
         //console.log('No volume callback registered.');
     }
@@ -23,11 +22,18 @@ var dataProcessing = (function() {
         console.log('No location callback registered.');
     }
 
+
     // Gets the magnitude of a number vector with 0..2 indices
     function magnitude3(vec) {
         return Math.sqrt(vec[0]*vec[0] + vec[1]*vec[1] + vec[2]*vec[2]);
     }
 
+    // Use OLD DATA to caluate an average acceleration over the previous
+    // n iterations.
+    function acceleration(pointerSpeed, n){
+        var lastn = oldDataarray.slice(-n);
+        return 0p;
+    }
 
     // Returns true if an instrumental group is selected.
     // returns false otherwise.
@@ -35,7 +41,7 @@ var dataProcessing = (function() {
         var ZPLANE = 0; 
         if(handLoc != null){
             if(handLoc[2] < ZPLANE){
-            detectSelectCallback(true);		
+                detectSelectCallback(true);     
             }
         }
     }
@@ -120,28 +126,20 @@ var dataProcessing = (function() {
             }
         }
     }
-
-
-    // Use OLD DATA to caluate an average acceleration over the previous
-    // n iterations.
-    function acceleration(pointerSpeed, n){
-        return 0;
-    }
     
     // Returns whether the current state is a beat.
     function detectTempoChange(pointerTip, pointerSpeed, handLoc){
-	
         //Using OLD DATA or something, return if data already happened.
 
         detectTempoChangeCallback(null);
     }
 
-    // Helper for detectOrchLoc
-    function detectRecentHandLoc(){
-        var LEFTEDGE = -300; 
-        var TOPEDGE = 400;
-        return [LEFTEDGE, TOPEDGE];
-    }
+    // Helper for detectOrchLoc (Not used as of saturday morning)
+    // function detectRecentHandLoc(){
+    //     var LEFTEDGE = -300; 
+    //     var TOPEDGE = 400;
+    //     return [LEFTEDGE, TOPEDGE];
+    // }
 
     // Points to a region in the orchestra.    
     // Does simple physics vector addition with some bounds.
@@ -165,13 +163,11 @@ var dataProcessing = (function() {
         var TOPEDGE = 450;
         var DEPTH =  50;         //variable
 
-
-
-	// Ignore out of place places, since the front end will 
-	// display exactly what we want (unchanged).
+       // Ignore out of place places, since the front end will 
+       // display exactly what we want (unchanged).
         if(handLoc === null || (handLoc[0] < LEFTEDGE || handLoc[0] > RIGHTEDGE)
-	   || (handLoc[1] < BOTTOMEDGE || handLoc[1] > TOPEDGE)){
-	    console.log(handLoc);
+       || (handLoc[1] < BOTTOMEDGE || handLoc[1] > TOPEDGE)){
+            console.log(handLoc);
             return;
         }
         var handX = handLoc[0];
@@ -184,24 +180,24 @@ var dataProcessing = (function() {
         var fingerX = fingerDir[0];
         var fingerY = fingerDir[1];
         
-	var fingerNorm = Math.sqrt(fingerX*fingerX + fingerY*fingerY);
+        var fingerNorm = Math.sqrt(fingerX*fingerX + fingerY*fingerY);
         if(fingerNorm === 0){
             var fingerLocNorm = [0,0];
         }
         else{
-            var fingerLocNorm = [fingerX/fingerNorm, 
-                      fingerY/fingerNorm];
+            var fingerLocNorm = [fingerX/fingerNorm, fingerY/fingerNorm];
         }
-	
+    
         var finalHandLoc = [handX + fingerLocNorm[0]*DEPTH, 
-			    handY + fingerLocNorm[1]*DEPTH];
-	var finalNormedLoc = [(finalHandLoc[0] - LEFTEDGE)/(RIGHTEDGE-LEFTEDGE), 
-                  (finalHandLoc[1] - BOTTOMEDGE)/(TOPEDGE-BOTTOMEDGE)];
-	
-	finalNormedLoc = _.map(finalNormedLoc, function (v){ if(v < 0) {return 0;} 
-					    else if(v > 1) {return 1;}
-					    else return v;});
-	
+                            handY + fingerLocNorm[1]*DEPTH];
+
+        var finalNormedLoc = [(finalHandLoc[0] - LEFTEDGE)/(RIGHTEDGE-LEFTEDGE), 
+                              (finalHandLoc[1] - BOTTOMEDGE)/(TOPEDGE-BOTTOMEDGE)];
+    
+        finalNormedLoc = _.map(finalNormedLoc, function (v){ if(v < 0) {return 0;} 
+                        else if(v > 1) {return 1;}
+                        else return v;});
+    
         detectOrchLocCallback(finalNormedLoc);
     }
 

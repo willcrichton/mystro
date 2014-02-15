@@ -5,12 +5,11 @@ $(function() {
         if(frame.pointables.length > 0 || frame.hands.length > 0)
         {
             var hands = frame.hands.filter(function(elem){return (elem.tools.length == 0)});
-    	    var tools = frame.tools;//.filter(function(elem){return (elem.tools.length > 0)});
+    	    var tools = frame.tools; //.filter(function(elem){return (elem.tools.length > 0)});
             if(tools.length > 0)
             {
-                var tool = tools[0];//toolHands[0].tools[0];
-                var pointerTip = tool.stabilizedTipPosition;
-                var pointerSpeed = tool.tipVelocity;
+                var pointerTip = tools[0].stabilizedTipPosition;
+                var pointerSpeed = tools[0].tipVelocity;
             }
             else
             {
@@ -23,7 +22,6 @@ $(function() {
                 var palmDir = [hands[0].sphereCenter[0] - hands[0].palmPosition[0],
                                hands[0].sphereCenter[1] - hands[0].palmPosition[1],
                                hands[0].sphereCenter[2] - hands[0].palmPosition[2]];
-                //var palmDir = hands[0].palmNormal;
                 var palmVelocity = hands[0].palmVelocity;
                 var fingerDir = hands[0].direction;
             }
@@ -35,15 +33,8 @@ $(function() {
                 var fingerDir = null;
             }
 
-            //stabilizedDisplay.innerText = "(" + Math.round(stabilizedPosition[0]) + ", " 
-            //    + Math.round(stabilizedPosition[1]) + ", " 
-            //    + Math.round(stabilizedPosition[2]) + ")";
-            //    deltaDisplay.innerText = "(" + (tipPosition[0] - stabilizedPosition[0]) + ", "
-            //        + (tipPosition[1] - stabilizedPosition[1]) + ", "
-            //        + (tipPosition[2] - stabilizedPosition[2]) + ")";
             dataProcessing.pushData(pointerTip, pointerSpeed, handLoc, palmVelocity, fingerDir);
         }
-        
     });
     ctl.connect();
     
