@@ -1,22 +1,27 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <script src="//js.leapmotion.com/0.4.0/leap.js"></script>
-    <script src="http://code.jquery.com/jquery-latest.js"></script>
-    <script src="app.js"></script>
-    <link href='http://fonts.googleapis.com/css?family=Open+Sans:400italic,400,700,300' rel='stylesheet' type='text/css'>
+    <script src="js/leap.js"></script>
+    <script src="js/data.js"></script>
+    <script src="js/jquery.js"></script>
+    <script src="js/dsp.js"></script>
+    <script src="js/pitchshift.js"></script>
+    <script src="js/app.js"></script>
+    <link href='http://fonts.googleapis.com/css?family=Open+Sans:400italic,400,700,300' rel='stylesheet'>
     <link href="style.css" rel="stylesheet">
   </head>
   <body>
-    <!--<p>Stabilized Position: <span id="stabPosition">…</span></p>-->
-    <!--<p>Difference from tip position: <span id="delta">…</span></p> -->
-    <div id="instruments">
-      <div class="instrument drum">Drums</div>
-      <div class="instrument violin">Violin</div>
-      <div class="instrument clarinet">Clarinet</div>
-    </div>
-    <div id="score">
-      <img src="score.png" />
+    <button id="play">PLAY</button>
+    <div id="main">
+      <div id="instruments">
+        <div class="instrument violin">Trumpet</div>
+        <div class="instrument drum">Trombone</div>
+        <div class="instrument clarinet">Trombone</div>
+        <div class="instrument violin">Tuba</div>
+      </div>
+      <div id="score">
+        <img src="score.png" />
+      </div>
     </div>
   </body>
 </html>

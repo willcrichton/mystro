@@ -5,6 +5,27 @@ body {
     font-family: 'Open Sans', Arial, sans-serif;
 }
 
+#play {
+    position: absolute;
+    top: 0; left: 0; bottom: 0; right: 0;
+    margin: auto;
+    width: 200px;
+    height: 100px;
+    padding: 10px;
+    text-align: center;
+    font-size: 48px;
+    background: #BF4941;
+    color: white;
+    text-shadow: 0 0 1px black;
+    border: none; outline: none;
+    border-radius: 10px;
+    cursor: pointer;
+}
+
+#main {
+    display: none;
+}
+
 #score {
     width: 900px;
     margin: 30px auto 0;
@@ -17,7 +38,7 @@ body {
 }
 
 #instruments {
-    width: 500px;
+    width: 660px;
     margin: 50px auto 0;
     overflow: auto;
 }
@@ -36,23 +57,23 @@ body {
     text-transform: uppercase;
     transition: 0.2s all;
     margin-right: 20px;
+    cursor: pointer;
 }
 
 .instrument:last-child {
     margin: 0;
 }
 
-.instrument:hover {
+.instrument.active {
     box-shadow: 0 0 10px rgba(255, 255, 255, 0.7);
     text-shadow: 0 0 6px black;
-    cursor: pointer;
 }
 
 .drum {
     background: #267326;
 }
 
-.drum:hover {
+.drum.active {
     background: #318F31;
 }
 
@@ -60,7 +81,7 @@ body {
     background: #87352F;
 }
 
-.violin:hover {
+.violin.active {
     background: #BF4941;
 }
 
@@ -68,6 +89,6 @@ body {
     background: #2F648A;
 }
 
-.clarinet:hover {
+.clarinet.active {
     background: #418BBF;
 }
