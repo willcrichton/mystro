@@ -251,11 +251,11 @@ var dataProcessing = (function() {
     function detectOrchLoc(handLoc, fingerDir) {
         // Constants for determining edges
 
-        var RIGHTEDGE = 50;
+        var RIGHTEDGE = 0;
         var LEFTEDGE = -280; 
         var BOTTOMEDGE = 180;
         var TOPEDGE = 450;
-        var DEPTH =  50;         //variable
+        var DEPTH =  250;         //variable
 
        // Ignore out of place places, since the front end will 
        // display exactly what we want (unchanged).
@@ -282,14 +282,14 @@ var dataProcessing = (function() {
             var fingerLocNorm = [fingerX/fingerNorm, fingerY/fingerNorm];
         }
     
-        var finalHandLoc = [handX + fingerLocNorm[0]*DEPTH, 
-                            handY + fingerLocNorm[1]*DEPTH];
+        var finalHandLoc = [handX + fingerLocNorm[0]*Math.abs(fingerLocNorm[0])*DEPTH,
+                            handY + fingerLocNorm[1]*Math.abs(fingerLocNorm[1])*DEPTH];
 
         var finalNormedLoc = [(finalHandLoc[0] - LEFTEDGE)/(RIGHTEDGE-LEFTEDGE), 
                               (finalHandLoc[1] - BOTTOMEDGE)/(TOPEDGE-BOTTOMEDGE)];
-    
-        finalNormedLoc = _.map(finalNormedLoc, function (v){ if(v < 0) {return 0;} 
-                        else if(v > 1) {return 1;}
+	console.log(finalNormedLoc);
+        finalNormedLoc = _.map(finalNormedLoc, function (u){ var v = u/2; if(v < 0) {return 0;} 
+                        else if(v > 1) {return 0.99;}
                         else return v;});
     
         detectOrchLocCallback(finalNormedLoc);
