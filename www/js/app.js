@@ -149,6 +149,6 @@ $(function() {
     });
 
     dataProcessing.onDetectOrchLoc(function(pair) {
-        console.log(pair);
+        //console.log(pair);
     });
 });

@@ -1,5 +1,5 @@
 var dataProcessing = (function() {
-    var oldData = {
+    var oldData = [
         // key: value pairs where key is the time in ms
         // 1234: {
         //     pointerTip: ...,
@@ -7,7 +7,7 @@ var dataProcessing = (function() {
         //     handLoc: ..., 
         //     ...
         //  }
-    }
+    ]
 
     detectVolumeChangeCallback = function() {
         //console.log('No volume callback registered.');
@@ -34,6 +34,8 @@ var dataProcessing = (function() {
     // Detects whether the palm is facing up, down, or in between. Returns one of
     // 'up', 'down', or 'unknown'
     function palmDirType(palmDir) {
+        var UP_PALM_THRESHOLD = .8;
+        var DOWN_PALM_THRESHOLD = -.8;
         if(palmDir === null || palmDir === undefined) {
             throw new Error('There isn\'t a palmDir!');
         }
@@ -49,26 +51,54 @@ var dataProcessing = (function() {
             } else if(upmag < 0) {
                 return 'down';
             } else {
-                return '0';
+                return 'unknown';
             }
         } else {
-            var score = upmag/mag;
-            //console.log('Score = ' + score);
+            var upness = upmag/mag;
+            //console.log('upness = ' + upness);
+            if(upness > UP_PALM_THRESHOLD) {
+                return 'up';
+            } else if(upness < DOWN_PALM_THRESHOLD) {
+                return 'down';
+            } else {
+                return 'unknown';
+            }
         }
     }
 
-    // Returns an absolute or relative change in volume.
-    // Use a threshold speed or absolute difference, and hand direction.
+    var MIN_PALM_HEIGHT = 200;
+    var MAX_PALM_HEIGHT = 400;
+    function normedVol(absoluteVolDelta) {
+        return absoluteVolDelta/(MAX_PALM_HEIGHT - MIN_PALM_HEIGHT);
+    }
+
+    // Returns change in volume, from -1.0 to 1.0.
     function detectVolumeChange(handLoc, palmDir) {
         if(palmDir === undefined) {
             throw new Error('There isn\'t a palmDir!');
         }
-        //if(handLoc === null) 
-        //if(palmDir === null) 
-        var MIN_PALM_HEIGHT = 200;
-        var MAX_PALM_HEIGHT = 400;
-        palmDirType(palmDir);
-        detectVolumeChangeCallback(null);
+        //if(handLoc === null) TODO
+        //if(palmDir === null) TODO
+        wheresItPointing = palmDirType(palmDir);
+
+        var thisHeightAndTheLastHeight = _.last(oldData, 2);
+        var lastHeight = (thisHeightAndTheLastHeight[0])[1];
+        var thisHeight = handLoc[1];
+        var result = null;
+        if(wheresItPointing === 'up') {
+            if(thisHeight > lastHeight) {
+                result = thisHeight - lastHeight;
+                console.log('up');
+            }
+        } else if(wheresItPointing === 'down') {
+            if(thisHeight < lastHeight) {
+                result = lastHeight - thisHeight;
+                console.log('down');
+            }
+        }
+        //if(result === null) {console.log('n');}
+
+        detectVolumeChangeCallback(normedVol(result));
     }
 
 
@@ -119,7 +149,6 @@ var dataProcessing = (function() {
                       fingerY/fingerNorm];
         }
 	
-
         var finalHandLoc = [handX + fingerLocNorm[0]*DEPTH, handY + fingerLocNorm[1]*DEPTH];
 	var finalNormedLoc = [(finalHandLoc[0] - LEFTEDGE)/(RIGHTEDGE-LEFTEDGE), 
                   (finalHandLoc[1] - BOTTOMEDGE)/(TOPEDGE-BOTTOMEDGE)];
@@ -142,13 +171,14 @@ var dataProcessing = (function() {
         // For each input, no data if null
         pushData: function(pointerTip, pointerSpeed, handLoc, palmDir, fingerDir) {
             time = (new Date()).getTime();
-            oldData[time] = {
-                 pointerTip: pointerTip,
-                 pointerSpeed: pointerSpeed, 
-                 handLoc: handLoc, 
-                 palmDir: palmDir,
-                 fingerDir: fingerDir
-            }
+            oldData.push({
+                time: time,
+                pointerTip: pointerTip,
+                pointerSpeed: pointerSpeed, 
+                handLoc: handLoc, 
+                palmDir: palmDir,
+                fingerDir: fingerDir
+            });
 
             detectSelect(pointerTip, pointerSpeed, handLoc, palmDir, fingerDir);
 
