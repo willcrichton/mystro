@@ -23,13 +23,16 @@ function detectSelect(pointerTip, pointerSpeed, handLoc, palmDir, fingerDir) {
 // Detects whether the palm is facing up, down, or in between. Returns one of
 // 'up', 'down', or 'unknown'
 function palmDirType(palmDir) {
+    if(palmDir === null || palmDir === undefined) {
+        throw new Error('There isn\'t a palmDir!');
+    }
     // Negatively correlated with pointing anywhere
     var mag = magnitude3(palmDir);
     // Positively correlated with pointing up
     var upmag = palmDir[1];
 
     if(mag === 0.0) {
-        console.log('Zero magnitude ball! Wow!');
+        console.log('Zero magnitude ball! Wow! Alert Philip!');
         if(upmag > 0) {
             return 'up';
         } else if(upmag < 0) {
@@ -39,18 +42,21 @@ function palmDirType(palmDir) {
         }
     } else {
         var score = upmag/mag;
-        console.log(score);
+        //console.log('Score = ' + score);
     }
 }
 
 // Returns an absolute or relative change in volume.
 // Use a threshold speed or absolute difference, and hand direction.
 function detectVolumeChange(handLoc, palmDir) {
+    if(palmDir === undefined) {
+        throw new Error('There isn\'t a palmDir!');
+    }
     //if(handLoc === null) 
     //if(palmDir === null) 
     var MIN_PALM_HEIGHT = 200;
     var MAX_PALM_HEIGHT = 400;
-    palmDirType();
+    palmDirType(palmDir);
 }
 
 
@@ -79,30 +85,30 @@ function detectOrchLoc(handLoc, fingerDir) {
     var DEPTH =  50;         //variable
 
     // USE OLD DATA 
-    if(handLoc === NULL){
-	handLoc = detectRecentHandLoc()
+    if(handLoc === null){
+        handLoc = detectRecentHandLoc()
     }
     var handX = handLoc[0];
     var handY = handLoc[1];
 
-    if(fingerLoc === NULL){
-	fingerLoc === [0, 0, 1];
+    if(fingerDir === null){
+        fingerDir = [0, 0, 1];
     }
 
-    var fingerX = fingerLoc[0];
-    var fingerY = fingerLoc[1];
-    var fingerNorm = Math.sqrt(fingerX, fingerX + fingerY+fingerY);
+    var fingerX = fingerDir[0];
+    var fingerY = fingerDir[1];
+    var fingerNorm = Math.sqrt(fingerX*fingerX + fingerY*fingerY);
     if(fingerNorm === 0){
-	var fingerLocNorm = 0;
+        var fingerLocNorm = 0;
     }
     else{
-	var fingerLocNorm = [fingerX/fingerNorm, 
+        var fingerLocNorm = [fingerX/fingerNorm, 
 			      fingerY/fingerNorm];
     }
 
     var finalHandLoc = [fingerX + fingerLocNorm*DEPTH, fingerY + fingerLocNorm*DEPTH];
-    var finalNormedLoc = [(fingerHandLoc[0] - LEFTEDGE)/(RIGHTEDGE-LEFTEDGE), 
-			  (fingerHandLoc[1] - BOTTOMEDGE)/(TIOEDGE-BOTTOMEDGE)];
+    var finalNormedLoc = [(finalHandLoc[0] - LEFTEDGE)/(RIGHTEDGE-LEFTEDGE), 
+			  (finalHandLoc[1] - BOTTOMEDGE)/(TOPEDGE-BOTTOMEDGE)];
 
     return finalNormedLoc;
 }
@@ -125,7 +131,10 @@ function pushData(pointerTip, pointerSpeed, handLoc, palmDir, fingerDir) {
     }
 
     detectSelect(pointerTip, pointerSpeed, handLoc, palmDir, fingerDir);
-    detectVolumeChange(pointerTip, pointerSpeed, handLoc, palmDir, fingerDir);
+
+    if(handLoc !== null && palmDir !== null) {
+        detectVolumeChange(handLoc, palmDir);
+    }
     detectTempoChange(pointerTip, pointerSpeed, handLoc, palmDir, fingerDir);
-    detectOrchLoc(pointerTip, pointerSpeed, handLoc, palmDir, fingerDir);
+    detectOrchLoc(handLoc, fingerDir);
 }
