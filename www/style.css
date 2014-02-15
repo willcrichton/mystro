@@ -48,6 +48,7 @@ body {
     width: 780px;
     height: 200px;
     overflow: auto;
+    margin-left: 10px;
     /*background: url('images/orchestra.png') no-repeat center center;*/
 }
 

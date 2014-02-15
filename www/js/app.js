@@ -140,7 +140,6 @@ $(function() {
     dataProcessing.onDetectVolumeChange(function(delta) {
         if (isNaN(delta) || Math.abs(delta) < 0.01) return;
 
-        console.log(delta);
         gains.forEach(function(node) {
             node.gain.value += delta * 5;
         });
@@ -148,14 +147,23 @@ $(function() {
 
     dataProcessing.onDetectOrchLoc(function(pair) {
         var x = pair[0], y = pair[1];
-        /*if (y < 0.4) {
+        if (y < 0.2) {
             $('.instrument').removeClass('hover');
             return;
-        }*/
+        }
 
         var len = $('.instrument').length;
         $('.instrument').removeClass('hover');
         //console.log(x, y, len, Math.floor(len * x));
         $($('.instrument')[Math.floor(len * x)]).addClass('hover');
+    });
+
+    dataProcessing.onDetectTempoChange(function(tempo) {
+        if (tempo === null) return;
+        console.log(tempo);
+    });
+
+    dataProcessing.onDetectSelectChange(function() {
+        console.log('Selected!');
     });
 });
