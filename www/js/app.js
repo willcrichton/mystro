@@ -8,7 +8,7 @@ $(function() {
     	    var toolHands = frame.hands.filter(function(elem){return (elem.tools.length > 0)});
             if(toolHands.length > 0)
             {
-                var tool = toolhands[0].tools[0];
+                var tool = toolHands[0].tools[0];
                 var pointerTip = tool.stabilizedTipPosition;
                 var pointerSpeed = tool.tipVelocity;
             }
@@ -39,8 +39,9 @@ $(function() {
             //    deltaDisplay.innerText = "(" + (tipPosition[0] - stabilizedPosition[0]) + ", "
             //        + (tipPosition[1] - stabilizedPosition[1]) + ", "
             //        + (tipPosition[2] - stabilizedPosition[2]) + ")";
+            pushData(pointerTip, pointerSpeed, handLoc, palmDir, fingerDir);
         }
-        pushData(pointerTip, pointerSpeed, handLoc, palmDir, fingerDir);
+        
     });
     ctl.connect();
     
