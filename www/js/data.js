@@ -55,7 +55,7 @@ var dataProcessing = (function() {
             }
         } else {
             var upness = upmag/mag;
-            console.log('upness = ' + upness);
+            //console.log('upness = ' + upness);
             if(upness > UP_PALM_THRESHOLD) {
                 return 'up';
             } else if(upness < DOWN_PALM_THRESHOLD) {
@@ -88,12 +88,15 @@ var dataProcessing = (function() {
         if(wheresItPointing === 'up') {
             if(thisHeight > lastHeight) {
                 result = thisHeight - lastHeight;
+                console.log('up');
             }
         } else if(wheresItPointing === 'down') {
             if(thisHeight < lastHeight) {
                 result = lastHeight - thisHeight;
+                console.log('down');
             }
         }
+        //if(result === null) {console.log('n');}
 
         detectVolumeChangeCallback(normedVol(result));
     }
@@ -147,11 +150,11 @@ var dataProcessing = (function() {
 
 
         var finalHandLoc = [fingerX + fingerLocNorm[0]*DEPTH, fingerY + fingerLocNorm[1]*DEPTH];
-	var test = [(finalHandLoc[0]), finalHandLoc[1]]
-	var finalNormedLoc = [(finalHandLoc[0] - LEFTEDGE)/(RIGHTEDGE-LEFTEDGE), 
+        var test = [(finalHandLoc[0]), finalHandLoc[1]]
+        var finalNormedLoc = [(finalHandLoc[0] - LEFTEDGE)/(RIGHTEDGE-LEFTEDGE), 
                   (finalHandLoc[1] - BOTTOMEDGE)/(TOPEDGE-BOTTOMEDGE)];
 
-	console.log(test)
+        //console.log(test)
         detectOrchLocCallback(finalNormedLoc);
     }
 
