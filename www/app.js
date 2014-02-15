@@ -29,7 +29,9 @@ $(function() {
             if(hands.length > 0)
             {
                 var handLoc = hands[0].stabilizedPalmPosition;
-                var palmDir = hands[0].palmNormal;
+                var palmDir = [hands[0].sphereCenter[0] - hands[0].palmPosition[0],
+                               hands[0].sphereCenter[1] - hands[0].palmPosition[1],
+                               hands[0].sphereCenter[2] - hands[0].palmPosition[2]];
                 var fingerDir = hands[0].direction;
             }
             else
