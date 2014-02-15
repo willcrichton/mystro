@@ -8,6 +8,12 @@ var oldData = {
     //  }
 }
 
+// Gets the magnitude of a number vector with 0..2 indices
+function magnitude3(vec) {
+    return Math.sqrt(vec[0]*vec[0] + vec[1]*vec[1] + vec[2]*vec[2]);
+}
+
+
 // Always returns a point (coordinate) on the screen (Optional?)
 function detectSelect(pointerTip, pointerSpeed, handLoc, palmDir, fingerDir) {
 
@@ -18,21 +24,21 @@ function detectSelect(pointerTip, pointerSpeed, handLoc, palmDir, fingerDir) {
 // 'up', 'down', or 'unknown'
 function palmDirType(palmDir) {
     // Negatively correlated with pointing anywhere
-    val magnitude = Math.sqrt(palmDir[0]*palmDir[0], palmDir[1]*palmDir[1], palmDir[2]*palmDir[2]);
+    var mag = magnitude(palmDir);
     // Positively correlated with pointing up
-    val upmagnitude = palmDir[1];
+    var upmag = palmDir[1];
 
-    if(magnitude === 0.0) {
+    if(mag === 0.0) {
         console.log('Zero magnitude ball! Wow!');
-        if(upmagnitude > 0) {
+        if(upmag > 0) {
             return 'up';
-        } else if(upmagnitude < 0) {
+        } else if(upmag < 0) {
             return 'down';
         } else {
             return '0';
         }
     } else {
-        val score = upmagnitude/magnitude;
+        var score = upmag/mag;
         console.log(score);
     }
 }
@@ -42,8 +48,8 @@ function palmDirType(palmDir) {
 function detectVolumeChange(handLoc, palmDir) {
     //if(handLoc === null) 
     //if(palmDir === null) 
-    val MIN_PALM_HEIGHT = 200;
-    val MAX_PALM_HEIGHT = 400;
+    var MIN_PALM_HEIGHT = 200;
+    var MAX_PALM_HEIGHT = 400;
     palmDirType();
 }
 
