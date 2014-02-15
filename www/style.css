@@ -15,7 +15,7 @@ body {
     padding: 10px;
     text-align: center;
     font-size: 48px;
-    background: #BF4941;
+    background: #c71621;
     color: white;
     text-shadow: 0 0 1px black;
     border: none; outline: none;
@@ -36,6 +36,7 @@ body {
     height: 320px;
     padding: 20px;
     background: white;
+    margin-left: -30px;
 }
 
 #score img {
@@ -44,13 +45,36 @@ body {
 }
 
 #instruments {
-    width: 750px;
-    height: 300px;
+    width: 780px;
+    height: 200px;
     overflow: auto;
-    background: url('images/orchestra.png') no-repeat center center;
+    /*background: url('images/orchestra.png') no-repeat center center;*/
 }
 
 .instrument {
+    border-radius: 100px;
+    border: 1px solid black;
+    transition: 0.2s all;
+    cursor: pointer;
+    padding-top: 25px;
+    padding-left: 15px;
+    width: 160px;
+    height: 150px;
+    opacity: 0.5;
+    float: left;
+    margin-right: 20px;
+}
+
+.instrument:hover {
+    /*border-color: #c71621;*/
+    opacity: 1;
+}
+
+.instrument:last-child {
+    margin-right: 0;
+}
+
+/*.instrument {
     font-size: 24px;
     color: white;
     text-shadow: 0 0 2px black;
@@ -106,4 +130,4 @@ body {
 
 .clarinet.active {
     background: #418BBF;
-}
+}*/
