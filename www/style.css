@@ -65,7 +65,7 @@ body {
     margin-right: 20px;
 }
 
-.instrument:hover {
+.instrument.hover {
     /*border-color: #c71621;*/
     opacity: 1;
 }
