@@ -8,18 +8,26 @@ var oldData = {
     //  }
 }
 
+
+// Always returns a point (coordinate) on the screen (Optional?)
 function detectSelect(pointerTip, pointerSpeed, handLoc, palmDir, fingerDir) {
 
 }
 
+
+// Returns an absolute or relative change in volume.
+// Use a threshold speed or absolute difference, and hand direction.
 function detectVolumeChange(pointerTip, pointerSpeed, handLoc, palmDir, fingerDir) {
 
 }
 
+
+// Returns an absolute or relative change in tempo.
 function detectTempoChange(pointerTip, pointerSpeed, handLoc, palmDir, fingerDir) {
 
 }
 
+// Points to a region in the orchestra.
 function detectOrchLoc(pointerTip, pointerSpeed, handLoc, palmDir, fingerDir) {
 
 }
