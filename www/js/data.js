@@ -9,6 +9,10 @@ var dataProcessing = (function() {
         //  }
     ]
 
+    detectSelectCallback = function() {
+//        console.log('No select callback registered.');
+    }
+
     detectVolumeChangeCallback = function() {
         //console.log('No volume callback registered.');
     }
@@ -25,9 +29,13 @@ var dataProcessing = (function() {
     }
 
 
-    // Always returns a point (coordinate) on the screen (Optional?)
-    function detectSelect(pointerTip, pointerSpeed, handLoc, palmDir, fingerDir) {
-        // This doesn't have callbacks registered.
+    // Returns true if an instrumental group is selected.
+    // returns false otherwise.
+    function detectSelect(handLoc) {
+	var ZPLANE = 0; 
+	if(handLoc != null){
+	    detectSelectCallback(handLoc[2] < ZPLANE);
+	}
     }
 
 
@@ -181,13 +189,16 @@ var dataProcessing = (function() {
                 fingerDir: fingerDir
             });
 
-            detectSelect(pointerTip, pointerSpeed, handLoc, palmDir, fingerDir);
+            detectSelect(handLoc);
 
             if(handLoc !== null && palmDir !== null) {
                 detectVolumeChange(handLoc, palmDir);
             }
             detectTempoChange(pointerTip, pointerSpeed, handLoc, palmDir, fingerDir);
             detectOrchLoc(handLoc, fingerDir);
+        },
+        onDetectSelectChange: function(callback) {
+            detectSelectCallback = callback;
         },
         onDetectVolumeChange: function(callback) {
             detectVolumeChangeCallback = callback;
