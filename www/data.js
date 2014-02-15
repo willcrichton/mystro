@@ -20,7 +20,6 @@ function detectTempoChange(pointerTip, pointerSpeed, handLoc, palmDir, fingerDir
 
 }
 
-
 function detectOrchLoc(pointerTip, pointerSpeed, handLoc, palmDir, fingerDir) {
 
 }
@@ -33,6 +32,15 @@ function detectOrchLoc(pointerTip, pointerSpeed, handLoc, palmDir, fingerDir) {
 // fingerDir : array 0..2 (normalized)
 // For each input, no data if null
 function pushData(pointerTip, pointerSpeed, handLoc, palmDir, fingerDir) {
+    time = (new Date()).getTime();
+    oldData[time] = {
+         pointerTip: pointerTip,
+         pointerSpeed: pointerSpeed, 
+         handLoc: handLoc, 
+         palmDir: palmDir,
+         fingerDir: fingerDir
+    }
+
     detectSelect(pointerTip, pointerSpeed, handLoc, palmDir, fingerDir);
     detectVolumeChange(pointerTip, pointerSpeed, handLoc, palmDir, fingerDir);
     detectTempoChange(pointerTip, pointerSpeed, handLoc, palmDir, fingerDir);

@@ -14,7 +14,7 @@ $(function() {
 	if(frame.pointables.length > 0)
         {
             var hands = frame.hands.filter(function(elem){return (elem.tools.length == 0)});
-	    var toolHands = frame.hands.filter(function(elem){return (elem.tools.length > 0)});
+    	    var toolHands = frame.hands.filter(function(elem){return (elem.tools.length > 0)});
             if(toolHands.length > 0)
             {
                 var tool = toolhands[0].tools[0];
