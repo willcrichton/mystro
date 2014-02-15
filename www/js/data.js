@@ -107,16 +107,17 @@ var dataProcessing = (function() {
         detectTempoChangeCallback(null);
     }
 
-    // Points to a region in the orchestra.
 
-    // Implementation: 
 
+    // Helper for detectOrchLoc
     function detectRecentHandLoc(){
         var LEFTEDGE = -300; 
         var TOPEDGE = 400;
         return [LEFTEDGE, TOPEDGE];
     }
 
+    // Points to a region in the orchestra.    
+    // Does simple physics vector addition with some bounds.
     function detectOrchLoc(handLoc, fingerDir) {
         // Constants for determining edges
 
@@ -149,15 +150,15 @@ var dataProcessing = (function() {
                       fingerY/fingerNorm];
         }
 	
-        var finalHandLoc = [handX + fingerLocNorm[0]*DEPTH, handY + fingerLocNorm[1]*DEPTH];
+        var finalHandLoc = [handX + fingerLocNorm[0]*DEPTH, 
+			    handY + fingerLocNorm[1]*DEPTH];
 	var finalNormedLoc = [(finalHandLoc[0] - LEFTEDGE)/(RIGHTEDGE-LEFTEDGE), 
                   (finalHandLoc[1] - BOTTOMEDGE)/(TOPEDGE-BOTTOMEDGE)];
 	
-	_.map(finalNormedLoc, function (v){ if(v < 0) {return 0;} 
+	finalNormedLoc = _.map(finalNormedLoc, function (v){ if(v < 0) {return 0;} 
 					    else if(v > 1) {return 1;}
 					    else return v;});
 	
-
         detectOrchLocCallback(finalNormedLoc);
     }
 
