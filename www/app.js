@@ -1,4 +1,6 @@
 $(function() {
+    var dataProcessing = require('data');
+
     var ctl = new Leap.Controller({enableGestures: true});
     var swiper = ctl.gesture('swipe');
     var pointable;
@@ -6,11 +8,6 @@ $(function() {
         // do things here
     });
 
-    
-    function processInputs(pointerTip, pointerSpeed, handLoc, palmDir, fingerDir) {
-        
-    }
-    
     var stabilizedDisplay = document.getElementById("stabPosition");
     //var deltaDisplay = document.getElementById("delta");
     ctl.on('frame', function(frame) {
@@ -27,7 +24,7 @@ $(function() {
             //        + (tipPosition[1] - stabilizedPosition[1]) + ", "
             //        + (tipPosition[2] - stabilizedPosition[2]) + ")";
         }
-        processInputs(pointerTip, pointerSpeed, handLoc, palmDir, fingerDir);
+        dataProcessing.pushData(pointerTip, pointerSpeed, handLoc, palmDir, fingerDir);
     });
     ctl.connect();
 });
