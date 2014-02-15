@@ -1,11 +1,13 @@
 $(function() {
+    var dataProcessing = require('data');
+
     var ctl = new Leap.Controller({enableGestures: true});
     var swiper = ctl.gesture('swipe');
     var pointable;
     swiper.update(function(g) {
         // do things here
     });
-    
+
     var stabilizedDisplay = document.getElementById("stabPosition");
     //var deltaDisplay = document.getElementById("delta");
     ctl.on('frame', function(frame){
@@ -36,7 +38,6 @@ $(function() {
                 var palmDir = null;
                 var fingerDir = null;
             }
-            var pointable = frame.pointables.filter(function(elem){return elem.tool})[0];
             
             //stabilizedDisplay.innerText = "(" + Math.round(stabilizedPosition[0]) + ", " 
             //    + Math.round(stabilizedPosition[1]) + ", " 
@@ -44,8 +45,8 @@ $(function() {
             //    deltaDisplay.innerText = "(" + (tipPosition[0] - stabilizedPosition[0]) + ", "
             //        + (tipPosition[1] - stabilizedPosition[1]) + ", "
             //        + (tipPosition[2] - stabilizedPosition[2]) + ")";
-	}
-        //processInputs(pointerTip, pointerSpeed, handLoc, palmDir, fingerDir);
+        }
+        dataProcessing.pushData(pointerTip, pointerSpeed, handLoc, palmDir, fingerDir);
     });
     ctl.connect();
 });
