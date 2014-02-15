@@ -23,7 +23,7 @@ $(function() {
             //        + (tipPosition[1] - stabilizedPosition[1]) + ", "
             //        + (tipPosition[2] - stabilizedPosition[2]) + ")";
 	}
-        //processInputs(pointerTip, pointerDir, handLoc, handDir);
+        //processInputs(pointerTip, pointerSpeed, handLoc, palmDir, fingerDir);
     });
     ctl.connect();
 });
