@@ -32,7 +32,7 @@ var dataProcessing = (function() {
     // n iterations.
     function acceleration(pointerSpeed, n){
         var lastn = oldDataarray.slice(-n);
-        return 0p;
+        return 0;
     }
 
     // Returns true if an instrumental group is selected.
