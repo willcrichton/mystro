@@ -1,4 +1,107 @@
+// hue integration
+var Hue;
 $(function() {
+    // n = 0, 1, 2
+    function hueURL(n) {
+        return 'http://192.168.1.147/api/1234567890/groups/0/action';
+    }
+
+    // Converts a number from 0.0 to 1.0 to a color from blue to red
+    function getHue(normalizedValue) {
+        // 46920 = blue, 65535 = red
+        return 46920 + parseInt((65535-46920)*normalizedValue);
+    }
+
+    // What message do we send next?
+    var nextURL = null;
+    var nextData = null;
+
+    // When did we last send a message?
+    var lastMessage = 0;
+
+    // How long (in milliseconds) to wait in between messages
+    var MIN_INTERVAL = 100;
+
+    function sendToHue(URL, lightData) {
+        nextURL = URL;
+        nextData = lightData;
+    }
+
+    window.setInterval(function() {
+        if(nextURL === null || nextData === null) {
+            return;
+        }
+
+        if(window.XMLHttpRequest) {
+            var http = new XMLHttpRequest();
+            http.open('PUT', nextURL, true);
+
+            http.onreadystatechange = function() {
+                if(http.readyState == 4) {
+                    var response;
+                    if(http.status==200) {
+                        response = 'Bad JSON: ' + http.responseText;
+                        response = JSON.stringify(JSON.parse(http.responseText), null, '\t');
+                    } else { 
+                        response = 'Error ' + http.status;
+                    }
+                    console.log(response);
+                }
+            }
+            http.send(JSON.stringify(nextData));
+            console.log('sent http request');
+        }
+        nextURL = null;
+        nextData = null;
+    }, MIN_INTERVAL);
+
+    Hue = {
+        // An object with keys like 'hue', 'bri', 'sat'...
+        send: function(newData) { 
+            sendToHue(hueURL(null), newData);
+        },
+        // Integer in [0, \infty)
+        setTransTime: function(time) {
+            this.send({
+                'transitiontime': time
+            });
+        },
+        // From 0 to 255
+        setBrightness: function(howBright) {
+            this.send({
+                'bri': howBright
+            });
+        },
+        // From 0.0 to 1.0
+        setColor: function(normalizedValue) {
+            this.send({
+                'hue': getHue(normalizedValue)
+            });
+        },
+        setWhite: function() {
+            this.send({
+                'hue': 36210
+            });
+        },
+        // 0 to 255
+        setSat: function(saturation) {
+            this.send({
+                'sat': saturation
+            });
+        },
+        // Initialize with our favorite settings
+        setup: function() {
+            this.setTransTime(0);
+            this.setBrightness(180);
+            this.setColor(0);
+            this.setSat(220);
+        }
+    };
+});
+
+
+$(function() {
+    Hue.setup();
     var ctl = new Leap.Controller({enableGestures: true});
 
     ctl.on('frame', function(frame){
@@ -64,7 +167,7 @@ $(function() {
         return x;
     };
 
-    var sounds = ['beethoven.mp3']; //['zelda1.wav', 'zelda2.wav', 'zelda3.wav', 'zelda4.wav'];
+    var sounds = ['zelda1.wav', 'zelda2.wav', 'zelda3.wav', 'zelda4.wav'];
     var buffers = [];
     var sources = [];
     var gains = [];
@@ -152,20 +255,28 @@ $(function() {
     dataProcessing.onDetectVolumeChange(function(delta) {
         if (isNaN(delta)) return;
 
-        gains.forEach(function(node, i) {
-            node.gain.value = clamp(node.gain.value + delta * 3, 0, 3.0);
-            setVolumeFill(i);
-        });
+        if (selected === -1) {
+            gains.forEach(function(node, i) {
+                node.gain.value = clamp(node.gain.value + delta * 3, 0, 3.0);
+                setVolumeFill(i);
+            });
+        } else {
+            var node = gains[selected];
+            gains[selected].gain.value = clamp(node.gain.value + delta * 3, 0, 3.0);
+            setVolumeFill(selected);
+        }
     });
 
     dataProcessing.onDetectOrchLoc(function(pair) {
         var x = pair[0], y = pair[1];
 
+        if (selected !== -1) return;
+
         $('#dot').css('left', x * $('#instruments').width());
 
         var len = $('.instrument').length;
         $('.instrument').removeClass('hover');
-        //console.log(x, y, len, Math.floor(len * x));
+
         $($('.instrument')[Math.floor(len * x)]).addClass('hover');
     });
 
@@ -196,13 +307,26 @@ $(function() {
                 pitchShift = 0.33 * (2 - oldRate);
             }
         });
+
+        // Convert the current tempo to [0.0, 1.0] and set that to the color
+        Hue.setColor(frames[0]/250);
     });
 
+    var selected = -1;
     dataProcessing.onDetectSelectChange(function(down) {
         if (down) {
-            $('.instrument.hover').addClass('active');
+            var $instrument = $('.instrument.hover');
+            if (!$instrument.length) return;
+
+            $instrument.addClass('active');
+            selected = $instrument.index();
+
+            $('#dot').css('left', $instrument.position().left + $instrument.width() / 2);
         } else {
             $('.instrument').removeClass('active');
+            selected = -1;
         }
     });
+
+
 });
