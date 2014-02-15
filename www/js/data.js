@@ -122,7 +122,7 @@ var dataProcessing = (function() {
         var finalNormedLoc = [(finalHandLoc[0] - LEFTEDGE)/(RIGHTEDGE-LEFTEDGE), 
                   (finalHandLoc[1] - BOTTOMEDGE)/(TOPEDGE-BOTTOMEDGE)];
 
-        detectTempoChangeCallback(finalNormedLoc);
+        detectOrchLocCallback(finalNormedLoc);
     }
 
     return {
