@@ -8,17 +8,43 @@ var oldData = {
     //  }
 }
 
-
 // Always returns a point (coordinate) on the screen (Optional?)
 function detectSelect(pointerTip, pointerSpeed, handLoc, palmDir, fingerDir) {
 
 }
 
 
+// Detects whether the palm is facing up, down, or in between. Returns one of
+// 'up', 'down', or 'unknown'
+function palmDirType(palmDir) {
+    // Negatively correlated with pointing anywhere
+    val magnitude = Math.sqrt(palmDir[0]*palmDir[0], palmDir[1]*palmDir[1], palmDir[2]*palmDir[2]);
+    // Positively correlated with pointing up
+    val upmagnitude = palmDir[1];
+
+    if(magnitude === 0.0) {
+        console.log('Zero magnitude ball! Wow!');
+        if(upmagnitude > 0) {
+            return 'up';
+        } else if(upmagnitude < 0) {
+            return 'down';
+        } else {
+            return '0';
+        }
+    } else {
+        val score = upmagnitude/magnitude;
+        console.log(score);
+    }
+}
+
 // Returns an absolute or relative change in volume.
 // Use a threshold speed or absolute difference, and hand direction.
-function detectVolumeChange(pointerTip, pointerSpeed, handLoc, palmDir, fingerDir) {
-
+function detectVolumeChange(handLoc, palmDir) {
+    //if(handLoc === null) 
+    //if(palmDir === null) 
+    val MIN_PALM_HEIGHT = 200;
+    val MAX_PALM_HEIGHT = 400;
+    palmDirType();
 }
 
 
@@ -54,5 +80,3 @@ function pushData(pointerTip, pointerSpeed, handLoc, palmDir, fingerDir) {
     detectTempoChange(pointerTip, pointerSpeed, handLoc, palmDir, fingerDir);
     detectOrchLoc(pointerTip, pointerSpeed, handLoc, palmDir, fingerDir);
 }
-
-exports.pushData = pushData;

@@ -1,6 +1,4 @@
 $(function() {
-    var dataProcessing = require('data');
-
     var ctl = new Leap.Controller({enableGestures: true});
     var swiper = ctl.gesture('swipe');
     var pointable;
@@ -46,7 +44,7 @@ $(function() {
             //        + (tipPosition[1] - stabilizedPosition[1]) + ", "
             //        + (tipPosition[2] - stabilizedPosition[2]) + ")";
         }
-        dataProcessing.pushData(pointerTip, pointerSpeed, handLoc, palmDir, fingerDir);
+        pushData(pointerTip, pointerSpeed, handLoc, palmDir, fingerDir, palmUpEh);
     });
     ctl.connect();
 });
