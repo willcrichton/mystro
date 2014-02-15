@@ -94,7 +94,7 @@ var dataProcessing = (function() {
         if(oldData.length > 1) {
             for(var i = oldData.length-2; i >= 0; i--) {
                 var elt = oldData[i];
-                if(elt.handLoc !=== null && elt.palmVelocity !== null) {
+                if(elt.handLoc !== null && elt.palmVelocity !== null) {
                     if(time - elt.time > IGNORE_IF_MORE_THAN_MILLIS) {
                         return null;
                     } else {

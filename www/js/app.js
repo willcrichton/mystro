@@ -137,11 +137,21 @@ $(function() {
         }
     });
 
-    dataProcessing.onDetectVolumeChange(function(delta) {
-        if (isNaN(delta) || Math.abs(delta) < 0.01) return;
+    function clamp(x, min, max) {
+        return Math.min(Math.max(x, min), max);
+    }
 
-        gains.forEach(function(node) {
-            node.gain.value += delta * 5;
+    function setVolumeFill(i) {
+        var fill = clamp(gains[i].gain.value / 3 * 100, 0, 100);
+        $('.instrument:nth-child(' + (i+1) + ')').css('background-position', 'left ' + fill + '%');
+    }
+
+    dataProcessing.onDetectVolumeChange(function(delta) {
+        if (isNaN(delta)) return;
+
+        gains.forEach(function(node, i) {
+            node.gain.value = clamp(node.gain.value + delta * 2, 0, 3.0);
+            setVolumeFill(i);
         });
     });
 
@@ -164,6 +174,6 @@ $(function() {
     });
 
     dataProcessing.onDetectSelectChange(function() {
-        console.log('Selected!');
+        //console.log('Selected!');
     });
 });

@@ -55,7 +55,6 @@ body {
 .instrument {
     border-radius: 100px;
     border: 1px solid black;
-    transition: 0.2s all;
     cursor: pointer;
     padding-top: 25px;
     padding-left: 15px;
@@ -64,9 +63,14 @@ body {
     opacity: 0.5;
     float: left;
     margin-right: 20px;
+
+    background: linear-gradient(to bottom, white 50%, gray 50%);
+    background-size: 100% 200%;
+    background-position: left 33%;
+    /*transition: 0.5s all ease;*/
 }
 
-.instrument.hover {
+.instrument.hover, .instrument:hover {
     opacity: 1;
 }
 
