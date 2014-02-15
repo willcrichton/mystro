@@ -1,5 +1,5 @@
 $(function() {
-    var dataProcessing = require('data');
+    var dataProcessing = pushData;
 
     var ctl = new Leap.Controller({enableGestures: true});
 
@@ -67,6 +67,11 @@ $(function() {
         request.send();
     }
 
+    function linearRange (a, b, y, z, c) {
+        var x = (c - a) * (z - y) / (b - a) + y;
+        return x;
+    };
+
     var sounds = ['zelda1.wav', 'zelda2.wav', 'zelda3.wav', 'zelda4.wav'];
     var buffers = [];
     var sources = [];
@@ -75,13 +80,15 @@ $(function() {
 
     var processor = context.createJavaScriptNode(2048, 1, 1);
     var shifter = new Pitchshift(2048, context.sampleRate, 'FFT');
-    var pitchShift = 0;
+    var pitchShift = 0.33;
     processor.onaudioprocess = function(event) {
         for (var channel = 0; channel < event.outputBuffer.numberOfChannels; channel++) {
             var output = event.outputBuffer.getChannelData(channel);
             var input = event.inputBuffer.getChannelData(channel);
             
-            shifter.process(Math.pow(1.0595, pitchShift), input.length, 4, input);
+            var shift = linearRange(0, 1, -12, 12, pitchShift);
+            var shift_value = pitchShift * 1.5 + 0.5; //Math.pow(1.0595, Math.round(shift));
+            shifter.process(shift_value, input.length, 4, input);
             for (var j = 0; j < output.length; j++) {
                 output[j] = shifter.outdata[j];
             }
@@ -129,10 +136,12 @@ $(function() {
     });
 
     $(document).click(function() {
-        sources.forEach(function(source) {
-            var inc = 0.1;
-            source.playbackRate.value += inc;
-            pitchShift -= inc * 2;
-        });
+        if ($('#main').is(':visible')) {
+            var inc = 0.5;
+            pitchShift *= 0.3;
+            sources.forEach(function(source) {
+                source.playbackRate.value += inc;
+            });
+        }
     });
 });
