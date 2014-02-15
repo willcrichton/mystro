@@ -77,11 +77,12 @@ var dataProcessing = (function() {
     // Calls back false othe group is deselected otherwise.
     function detectSelect(handLoc, hands) {
         if(handLoc !== null && hands[0].pointables.length > 0) {
-            if(hands[0].pointables[0].touchDistance < 0 && currentlyTouched == 0){
+            console.log(Math.round((hands[0].pointables[0].touchDistance)*100));
+            if(hands[0].pointables[0].touchDistance < 33 && currentlyTouched == 0){
                 currentlyTouched = 1;
                 detectSelectCallback(true);
             }
-            else if(hands[0].pointables[0].touchDistance > 0 && currentlyTouched == 1)
+            else if(hands[0].pointables[0].touchDistance > 33 && currentlyTouched == 1)
             {
                 currentlyTouched = 0;
                 detectSelectCallback(false);

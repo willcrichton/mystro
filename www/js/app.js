@@ -158,7 +158,7 @@ $(function() {
     dataProcessing.onDetectOrchLoc(function(pair) {
         var x = pair[0], y = pair[1];
 
-        console.log(x, y);
+        //console.log(x, y);
 
         $('#dot').css('left', x * $('#instruments').width());
 
@@ -185,7 +185,7 @@ $(function() {
 
         avg /= frames.length;
 
-        console.log(avg, frames);
+        //console.log(avg, frames);
 
         sources.forEach(function(source) {
             //source.playbackRate.value = avg / 72;
