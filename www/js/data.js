@@ -110,12 +110,11 @@ var dataProcessing = (function() {
                 result = thisHeight - lastHeight;
                 //console.log('up');
             } else if(moveDirection < 0 && thisHeight < lastHeight) {
-                result = lastHeight - thisHeight;
+                result = thisHeight - lastHeight;
                 //console.log('down');
             }
 
             if(result !== null) {
-                //console.log(thisHeight - lastHeight);
                 detectVolumeChangeCallback(normedVol(result));
             }
         }
@@ -171,7 +170,7 @@ var dataProcessing = (function() {
 	// display exactly what we want (unchanged).
         if(handLoc === null || (handLoc[0] < LEFTEDGE || handLoc[0] > RIGHTEDGE)
 	   || (handLoc[1] < BOTTOMEDGE || handLoc[1] > TOPEDGE)){
-	    console.log(handLoc);
+	    //console.log(handLoc);
             return;
         }
         var handX = handLoc[0];
