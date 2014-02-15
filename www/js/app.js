@@ -139,6 +139,10 @@ $(function() {
 
     dataProcessing.onDetectVolumeChange(function(delta) {
 
+        gains.forEach(function(node, i) {
+            node.gain.value = clamp(node.gain.value + delta * 3, 0, 3.0);
+            setVolumeFill(i);
+        });
     });
 
     dataProcessing.onDetectOrchLoc(function(pair) {
