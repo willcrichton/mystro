@@ -129,29 +129,36 @@ var dataProcessing = (function() {
         detectTempoChangeCallback(null);
     }
 
-
-
-    // Helper for detectOrchLoc
-    function detectRecentHandLoc(){
-        var LEFTEDGE = -300; 
-        var TOPEDGE = 400;
-        return [LEFTEDGE, TOPEDGE];
-    }
-
     // Points to a region in the orchestra.    
     // Does simple physics vector addition with some bounds.
+    // Reasons why this doesn't work too well: Conductors point to groups of
+    // musicians by a combination of their hand location and direction.
+    // We can make the direction smooth (i.e. pointing at a place = place
+    // lights up) but then left-right movement is shaky (really hard
+    // to stay in the middle. Alternatively, we can have smooth
+    // left-right movement but then pointing to a place won't work.
+    // You can't point to the endpoints from the other endpoint.
+    // There is not really a middle ground.
+
+    // The variable to change is DEPTH. Lower DEPTH = smoother lateral movement.
+    //                                  Higher DEPTH = smoother pointing.
     function detectOrchLoc(handLoc, fingerDir) {
         // Constants for determining edges
 
         var RIGHTEDGE = 50;
-        var LEFTEDGE = -300; 
-        var BOTTOMEDGE = 200;
-        var TOPEDGE = 400;
-        var DEPTH =  100;         //variable
+        var LEFTEDGE = -280; 
+        var BOTTOMEDGE = 180;
+        var TOPEDGE = 450;
+        var DEPTH =  50;         //variable
 
-        // USE OLD DATA 
-        if(handLoc === null){
-            handLoc = detectRecentHandLoc()
+
+
+	// Ignore out of place places, since the front end will 
+	// display exactly what we want (unchanged).
+        if(handLoc === null || (handLoc[0] < LEFTEDGE || handLoc[0] > RIGHTEDGE)
+	   || (handLoc[1] < BOTTOMEDGE || handLoc[1] > TOPEDGE)){
+	    console.log(handLoc);
+            return;
         }
         var handX = handLoc[0];
         var handY = handLoc[1];
