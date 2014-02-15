@@ -1,3 +1,80 @@
+// hue integration
+var Hue;
+$(function() {
+    // n = 0, 1, 2
+    function hueURL(n) {
+        return 'http://192.168.1.147/api/1234567890/groups/0/action';
+    }
+
+    // Converts a number from 0.0 to 1.0 to a color from blue to red
+    function getHue(normalizedValue) {
+        // 46920 = blue, 65535 = red
+        return 46920 + parseInt((65535-46920)*normalizedValue);
+    }
+
+    function sendToHue(URL, lightData) {
+        if(window.XMLHttpRequest) {
+            var http = new XMLHttpRequest();
+            http.open('PUT', URL, true);
+
+            http.onreadystatechange = function() {
+                if(http.readyState == 4) {
+                    var response;
+                    if(http.status==200) {
+                        response = 'Bad JSON: ' + http.responseText;
+                        response = JSON.stringify(JSON.parse(http.responseText), null, '\t');
+                    } else { 
+                        response = 'Error ' + http.status;
+                    }
+                    console.log(response);
+                }
+            }
+            http.send(JSON.stringify(lightData));
+            console.log('sent http request');
+        }
+    }
+
+
+    Hue = {
+        // An object with keys like 'hue', 'bri', 'sat'...
+        send: function(newData) { 
+            //for(var i = 1; i <= 3; i++) {
+                sendToHue(hueURL(null), newData);
+            //}
+        },
+        // Integer in [0, \infty)
+        setTransTime: function(time) {
+            this.send({
+                'transitiontime': time
+            });
+        },
+        // From 0 to 255
+        setBrightness: function(howBright) {
+            this.send({
+                'bri': howBright
+            });
+        },
+        // From 0.0 to 1.0
+        setColor: function(normalizedValue) {
+            this.send({
+                'hue': getHue(normalizedValue)
+            });
+        },
+        setWhite: function() {
+            this.send({
+                'hue': 36210
+            });
+        },
+        // 0 to 255
+        setSat: function(saturation) {
+            this.send({
+                'sat': saturation
+            });
+        }
+    };
+});
+
+
 $(function() {
     var ctl = new Leap.Controller({enableGestures: true});
 
@@ -176,4 +253,6 @@ $(function() {
     dataProcessing.onDetectSelectChange(function() {
         //console.log('Selected!');
     });
+
+
 });
