@@ -11,6 +11,7 @@ var dataProcessing = (function() {
     var lastAverageVelocity = 0;
     var currentlyTouched = 0;
     var lastBeatTime = 0;
+    var lastBeatLoc = [-1000,-1000,1000]; //intialized outside of range.
 
     detectSelectCallback = function() {
         //console.log('No select callback registered.');
@@ -191,10 +192,10 @@ var dataProcessing = (function() {
             }
         }
     }
-    // NOT ACTUALLY A DOT PRODUCT
+    // NOT ACTUALLY A DOT PRODUCT. EDIT: dot product is now a real dot product
     function dotP(a, b){
-	    var A = 1.5
-	    var B = 0.6
+	    var A = 1
+	    var B = 1
 	    return A*a[0]*b[0] + B*a[1]*b[1] + a[2]+b[2];
     }
     
@@ -204,49 +205,53 @@ var dataProcessing = (function() {
 	    return dotP(a,b)/(magnitude3(a)*magnitude3(b))
     }
 
+    function distance2(pt, ps){
+	return magnitude3([pt[0]-ps[0], pt[1]-ps[1], 0]);
+    }
+
     // Calls the callback function if current state is a beat.
-    // CURRENTLY BUGGY: PATRICK TODO: Use a globa and wrap this function
-    // into a tempo calculator.
-    var NUM_FRAMES = 25;
+     var NUM_FRAMES = 25;
     var TIME_DELAY = 350;
     var BEAT_THRESHOLD = -7000;
     var lastSpeeds = [];
-    function detectTempoChange(pointerTip, pointerSpeed){
-        //Using OLD DATA or something, return if data already happened.
 
-        /*var V_SMOOTHNESS = 4;
-	    var TIMEDELAY = 400;
+
+    /* To ensure backwards compatibilty. This needs to change */
+    function detectTempoChange(pointerTip, pointerSpeed){
+	if(beatReceived(pointerTip, pointerSpeed)){
+	    detectVolumeChangeCallback(true);		
+	}
+    }
+
+    // Preliminary detectTempoChange function.
+    // Currently this OVERCOUNTS the beats.
+    // IMPORTANT: RETURNS TRUE IF A BEAT IS RECEIVED
+    // There are still bugs, I want to push out something so you guys
+    // can use it first.
+    function beatReceived(pointerTip, pointerSpeed){
+        var V_SMOOTHNESS = 10;
+	var V_BEGIN = 30;
+	var TIMEDELAY = 300;      //Calibrate based on tempo
+	var EPSILON = 175;        //Calibrate based on intensity (if exists)
+	var returnVar = false;    // this variable is dumb.
         if(pointerTip != null){
-            var oldvs = oldData.slice(-V_SMOOTHNESS).
+            var oldvs = oldData.slice(-V_BEGIN, (-V_BEGIN + V_SMOOTHNESS)).
 		        filter(function(x){return x.pointerSpeed != null;}).
 		        map(function(y){return y.pointerSpeed});
             var avgVel = averageVector3(oldvs);
-            var beatSign = dotP([avgVel[0], avgVel[1], 0], [pointerSpeed[0], pointerSpeed[1], 0]);
-
-	        if(beatSign < -7000
-		       && (new Date().getTime() - lastBeatTime)> TIMEDELAY){
-		        detectTempoChangeCallback(true);
-		        //console.log("beat");
-		        lastBeatTime = (new Date().getTime())
+            var beatSign = cosine([avgVel[0], avgVel[1], 0], [pointerSpeed[0], pointerSpeed[1], 0]);
+	    if( (beatSign < -0.25 || magnitude3(pointerSpeed) < 30 ) 
+		&& (new Date().getTime() - lastBeatTime)> TIMEDELAY &&
+	        distance2(pointerTip, lastBeatLoc) > EPSILON ){
+		console.log(beatSign, distance2(pointerTip, lastBeatLoc), pointerTip, magnitude3(pointerSpeed));
+		lastBeatTime = (new Date().getTime());
+		lastBeatLoc = pointerTip;
+		returnVar = true;
             }
             lastAverageVelocity = avgVel;
-        }*/
-        
-        if (pointerTip === null) return;
-        lastSpeeds.push(pointerSpeed);
-        
-        if (lastSpeeds.length >= NUM_FRAMES) {
-            lastSpeeds.shift();
         }
-        
-        var oldAvg = averageVector3(lastSpeeds.slice(Math.floor(NUM_FRAMES / 5)));
-
-        var beat = dotP([oldAvg[0], oldAvg[1], 0], [pointerSpeed[0], pointerSpeed[1], 0]);
-	    if(beat < BEAT_THRESHOLD && (new Date().getTime() - lastBeatTime) > TIME_DELAY){
-		    detectTempoChangeCallback(true);
-		    lastBeatTime = (new Date().getTime())
-        }
-    }
+        return returnVar;
+       }
 
     // Helper for detectOrchLoc (Not used as of saturday morning)
     // function detectRecentHandLoc(){
@@ -344,7 +349,7 @@ var dataProcessing = (function() {
             detectSelect(handLoc, hands);
 
             detectVolumeChange(handLoc, palmVelocity, time);
-            detectTempoChange(pointerTip, pointerSpeed, handLoc);
+            detectTempoChange(pointerTip, pointerSpeed);
             detectOrchLoc(handLoc, fingerDir);
         },
         onDetectSelectChange: function(callback) {
