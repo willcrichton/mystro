@@ -65,8 +65,8 @@ var dataProcessing = (function() {
         }
     }
 
-    // Returns true if an instrumental group is selected.
-    // returns false otherwise.
+    // Sends true event if an instrumental group is selected.
+    // does not return
     function detectSelect(handLoc) {
         var ZPLANE = 0; 
         if(handLoc != null){
@@ -161,6 +161,7 @@ var dataProcessing = (function() {
     function detectTempoChange(pointerTip, pointerSpeed, handLoc){
         //Using OLD DATA or something, return if data already happened.
         var V_SMOOTHNESS = 3
+	console.log(historicalAcceleration(6));
         if(pointerTip != null){
             var oldvs = oldData.slice(-V_SMOOTHNESS).map(function(y){return y.pointerSpeed});
             //console.log(oldData.slice(-V_SMOOTHNESS).map(function(y){return y}));
@@ -171,7 +172,7 @@ var dataProcessing = (function() {
                 console.log("beat");
             }
             lastAverageVelocity = avgVel;
-            lastBeatTime = 
+ //           lastBeatTime = 
         }
         detectTempoChangeCallback(null);
     }
