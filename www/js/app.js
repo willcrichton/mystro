@@ -144,4 +144,12 @@ $(function() {
             });
         }
     });
+
+    dataProcessing.onDetectVolumeChange(function(delta) {
+
+    });
+
+    dataProcessing.onDetectOrchLoc(function(pair) {
+        console.log(pair);
+    });
 });

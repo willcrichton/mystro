@@ -10,10 +10,10 @@ var dataProcessing = (function() {
     }
 
     detectVolumeChangeCallback = function() {
-        console.log('No volume callback registered.');
+        //console.log('No volume callback registered.');
     }
     detectTempoChangeCallback = function() {
-        console.log('No tempo callback registered.');
+        //console.log('No tempo callback registered.');
     }
     detectOrchLocCallback = function() {
         console.log('No location callback registered.');
