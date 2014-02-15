@@ -259,8 +259,8 @@ var dataProcessing = (function() {
 
        // Ignore out of place places, since the front end will 
        // display exactly what we want (unchanged).
-        if(handLoc === null || (handLoc[0] < LEFTEDGE || handLoc[0] > RIGHTEDGE)
-       || (handLoc[1] < BOTTOMEDGE || handLoc[1] > TOPEDGE)){
+        if(handLoc === null || (handLoc[0] < (LEFTEDGE-80)) || (handLoc[0] > (RIGHTEDGE + 60))
+	   || (handLoc[1] < (BOTTOMEDGE-100)) || (handLoc[1] > (TOPEDGE+50))  ){
             //console.log(handLoc);
             return;
         }
