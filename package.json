@@ -4,7 +4,7 @@
   "author": "Will Crichton",
   "description": "PennApps",
   "dependencies": {
-    "socket.io": "0.9.15",
+    "socket.io": "0.9.16",
     "node-static": "0.7.0",
     "underscore": "~1.5.1"
   }
