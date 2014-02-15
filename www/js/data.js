@@ -78,11 +78,12 @@ var dataProcessing = (function() {
     function detectSelect(handLoc, hands) {
         if(handLoc !== null && hands[0].pointables.length > 0) {
             var distance = hands[0].pointables[0].stabilizedTipPosition;
-            if(distance < -100 && currentlyTouched == 0){
+            //console.log(distance[2]);
+            if(distance[2] < -100 && currentlyTouched == 0){
                 currentlyTouched = 1;
                 detectSelectCallback(true);
             }
-            else if(distance > 0 && currentlyTouched == 1)
+            else if(distance[2] > 0 && currentlyTouched == 1)
             {
                 currentlyTouched = 0;
                 detectSelectCallback(false);
