@@ -9,11 +9,8 @@ var dataProcessing = (function() {
         //  }
     ]
     var lastAverageVelocity = 0;
-<<<<<<< HEAD
     var currentlyTouched = 0;
-=======
     var lastBeatTime = 0;
->>>>>>> e581625d0e34c3a950c2611cb8723e2f44ea9363
 
     detectSelectCallback = function() {
         //console.log('No select callback registered.');
