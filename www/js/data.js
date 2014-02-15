@@ -24,7 +24,7 @@ function detectSelect(pointerTip, pointerSpeed, handLoc, palmDir, fingerDir) {
 // 'up', 'down', or 'unknown'
 function palmDirType(palmDir) {
     // Negatively correlated with pointing anywhere
-    var mag = magnitude(palmDir);
+    var mag = magnitude3(palmDir);
     // Positively correlated with pointing up
     var upmag = palmDir[1];
 
