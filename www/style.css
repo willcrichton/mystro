@@ -3,6 +3,7 @@
 body {
     background: white;
     font-family: 'Open Sans', Arial, sans-serif;
+    font-weight: 300;
 }
 
 #play {
@@ -24,44 +25,57 @@ body {
 
 #main {
     display: none;
+    width: 800px;
+    margin: 50px auto 0;
 }
 
 #score {
-    width: 900px;
-    margin: 30px auto 0;
+    width: 800px;
+    margin-top: 30px;
     overflow: auto;
-    height: 400px;
+    height: 320px;
+    padding: 20px;
+    background: white;
 }
 
 #score img {
-    width: 900px;
+    width: 800px;
+    margin-bottom: 20px;
 }
 
 #instruments {
-    width: 660px;
-    margin: 50px auto 0;
+    width: 750px;
+    height: 300px;
     overflow: auto;
+    background: url('images/orchestra.png') no-repeat center center;
 }
 
 .instrument {
-    width: 150px;
-    height: 95px;
-    padding-top: 55px;
     font-size: 24px;
     color: white;
     text-shadow: 0 0 2px black;
     text-align: center;
-    border-radius: 4px;
     position: relative;
     float: left;
     text-transform: uppercase;
     transition: 0.2s all;
-    margin-right: 20px;
     cursor: pointer;
+    margin-top: 85px;
+    background: none!important;
+    position: relative;
+    margin-right: 45px;
+}
+
+.instrument:first-child {
+    margin-left: 60px;
+    margin-top: 120px;
+    left: 10px;
 }
 
 .instrument:last-child {
-    margin: 0;
+    margin-right: 0;
+    margin-left: -30px;
+    margin-top: 120px;
 }
 
 .instrument.active {
@@ -79,6 +93,7 @@ body {
 
 .violin {
     background: #87352F;
+    right: 15px;
 }
 
 .violin.active {

@@ -109,7 +109,7 @@ $(function() {
             var gain = context.createGainNode();
             gain.connect(processor);
             source.connect(gain);
-            gain.gain.value = 2.0;
+            gain.gain.value = 0.0;
 
             sources[i] = source;
             gains[i] = gain;
