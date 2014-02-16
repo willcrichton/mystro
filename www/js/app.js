@@ -325,7 +325,7 @@ $(function() {
             }
         });*/
 
-        currentTempo = tempo / C.BASE_TEMPO;
+       // currentTempo = tempo / C.BASE_TEMPO;
     });
 
     setInterval(function() {
@@ -364,6 +364,24 @@ $(function() {
 
         onBeat();
     });
+
+
+    dataProcessing.onDetectOnPause(function(bool){
+	if(started){
+	    sources.forEach(function(source) {
+		if(bool){
+		    console.log("disconnect");
+		    source.disconnect(processor);
+		}
+		else{
+		    source.connect(processor);
+		}
+	    });
+	}
+    });
+	
+	    
+
 
     dataProcessing.onStart(function() {
         if (logoVisible) {

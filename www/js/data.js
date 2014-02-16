@@ -38,8 +38,10 @@ var dataProcessing = (function() {
     detectVolumeChangeCallback = function() { }
     detectTempoChangeCallback = function() { }
     detectOrchLocCallback = function() { }
+    detectOnPauseCallback = function() { }
     onBeatCallback = function() { }
     onStartCallback = function() { }
+
 
 
     ////////////////////////// Vector & helper Functions  ////////////////////
@@ -56,6 +58,7 @@ var dataProcessing = (function() {
     }
 
     //Technically a variable dot product
+    //Historically not actually a dot product.
     function dotP(a, b){
         var A = 1
         var B = 1
@@ -91,6 +94,24 @@ var dataProcessing = (function() {
     }   
 
     ////////////////////////// Functions  ///////////////////////////
+
+
+    function detectOnPause(pointerTip, pointerSpeed){
+	if(pointerTip == null){
+	    return;
+	}
+	var EPSILON_0 = 150;  //Epsilon_0 < Epsilon
+	if(magnitude3(pointerSpeed) < 30 && 
+	   distance2(pointerTip, lastBeatLoc) < EPSILON_0){
+	    MIN_TEMPO = 0;
+	    detectOnPauseCallback(true);
+	}
+	else{
+	    MIN_TEMPO = parseInt(BASE_TEMPO/3);
+	    detectOnPauseCallback(false);
+	}
+    }
+
 
     // Calls back true if an instrumental group is selected.
     // Calls back false othe group is deselected otherwise.
@@ -232,7 +253,7 @@ var dataProcessing = (function() {
     // There are still bugs, I want to push out something so you guys
     // can use it first.
     function beatReceived(pointerTip, pointerSpeed){
-        //REQUIRES tempo != nan.
+        //@REQUIRES tempo != NaN.
         var V_SMOOTHNESS = 35;
         var V_BEGIN = 50;
         var TIMEDELAY = (3/5)*(60000/tempo);      //Calibrate based on tempo
@@ -360,6 +381,7 @@ var dataProcessing = (function() {
             detectVolumeChange(handLoc, palmVelocity, time);
             detectTempoChange(pointerTip, pointerSpeed, time);
             detectOrchLoc(handLoc, fingerDir);
+	    detectOnPause(pointerTip, pointerSpeed);
         },
         onDetectSelectChange: function(callback) {
             detectSelectCallback = callback;
@@ -378,6 +400,10 @@ var dataProcessing = (function() {
         },
         onStart: function(callback) {
             onStartCallback = callback;
+        },
+        onDetectOnPause: function(callback) {
+            detectOnPauseCallback = callback;
         }
+
     }
 })();
