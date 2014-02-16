@@ -64,9 +64,11 @@ var dataProcessing = (function() {
         TIMEOUT = 1000;
         if(oldData.length >= n){
 	        var lastn1 = oldData.slice(-n);
-            var lastn = oldData.slice(-n).filter(
-		        function(y){return y.pointerSpeed != null && (((new Date().getTime()) - y.time) < 1000)}
-	        ).map(function(x){return x.pointerSpeed;});
+            var lastn = oldData.slice(-n).filter(function(y) {
+                return y.pointerSpeed != null && (((new Date().getTime()) - y.time) < 1000)
+            }).map(function(x) {
+                return x.pointerSpeed;
+            });
             var accels = [];
             for (var i = lastn.length - 1; i >= 1; i--) {
                 accels.push($V(lastn[i]).subtract($V(lastn[i-1])).elements);
@@ -126,7 +128,7 @@ var dataProcessing = (function() {
     // element of oldData is actually the current data, so ignore that one.
     // Also checks that the data is 'recent enough'.
     function lastVolData(time) {
-        var IGNORE_IF_OLDER_THAN_MILLIS = 1000;
+        var IGNORE_IF_OLDER_THAN_MILLIS = 100;
         if(oldData.length > 1) {
             for(var i = oldData.length-2; i >= 0; i--) {
                 var elt = oldData[i];
@@ -238,8 +240,9 @@ var dataProcessing = (function() {
 
     /* To ensure backwards compatibilty. This needs to change */
     function detectTempoChange(pointerTip, pointerSpeed){
+	console.log("delete this line");
 	if(beatReceived(pointerTip, pointerSpeed)){
-	    detectVolumeChangeCallback(true);		
+	    detectTempoChangeCallback(true);		
 	}
     }
 
