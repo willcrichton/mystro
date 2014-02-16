@@ -40,6 +40,9 @@ var dataProcessing = (function() {
     onBeatCallback = function() {
         console.log('No beat callback registered.');
     }
+    onStartCallback = function() {
+        console.log('No start callback registered.');
+    }
 
 
     // Gets the magnitude of a number vector with 0..2 indices
@@ -420,6 +423,7 @@ var dataProcessing = (function() {
         detectOrchLocCallback(finalNormedLoc);
     }
 
+    var started = false;
     return {
         // Called when the leapmotion gets new data.
         // pointerTip : array 0..2
@@ -434,6 +438,11 @@ var dataProcessing = (function() {
             }
             if(palmVelocity === undefined) {
                 throw new Error('undefined palmVelocity passed to pushData.');
+            }
+
+            if (!started) {
+                onStartCallback();
+                started = true;
             }
 
             time = (new Date()).getTime();
@@ -466,6 +475,9 @@ var dataProcessing = (function() {
         },
         onBeat: function(callback) {
             onBeatCallback = callback;
+        },
+        onStart: function(callback) {
+            onStartCallback = callback;
         }
     }
 })();

@@ -74,7 +74,7 @@ body {
 
     background: linear-gradient(to bottom, white 50%, gray 50%);
     background-size: 100% 200%;
-    background-position: left 33%;
+    background-position: left 0%;
     /*transition: 0.5s all ease;*/
 }
 

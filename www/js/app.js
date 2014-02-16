@@ -1,7 +1,3 @@
-
-
-
-
 // hue integration
 var Hue;
 $(function() {
@@ -208,7 +204,7 @@ $(function() {
             var gain = context.createGainNode();
             gain.connect(processor);
             source.connect(gain);
-            gain.gain.value = 1.0;
+            gain.gain.value = 0.0;
 
             sources[i] = source;
             gains[i] = gain;
@@ -253,8 +249,17 @@ $(function() {
         }
     }
 
+    var started = false;
+    var mainVisible = false;
     dataProcessing.onDetectVolumeChange(function(delta) {
         if (isNaN(delta)) return;
+
+        if (!started && mainVisible && delta > 0.01) {
+            sources.forEach(function(source) {
+                source.start(0);
+            });
+            started = true;
+        }
 
         var maxVol = 0;
         if (selected === -1) {
@@ -273,17 +278,8 @@ $(function() {
         Hue.setColor(maxVol/3);
     });
 
-    var fadeIn = false;
     dataProcessing.onDetectOrchLoc(function(pair) {
         var x = pair[0], y = pair[1];
-
-        if (!fadeIn) {
-            fadeIn = true;
-            $('#logo').fadeOut(function() {
-                $('#main').fadeIn(3000);
-                applause.start(0);
-            });
-        }
 
         if (selected !== -1) return;
 
@@ -299,15 +295,7 @@ $(function() {
     var frames = [];
     var NUM_FRAMES = 3;
     
-    var started = false;
     dataProcessing.onDetectTempoChange(function() {
-
-        if (!started) {
-            sources.forEach(function(source) {
-                source.start(0);
-            });
-            started = true;
-        }
 
         var cur = new Date().getTime();
 
@@ -348,5 +336,13 @@ $(function() {
             $('.instrument').removeClass('active');
             selected = -1;
         }
+    });
+
+    dataProcessing.onStart(function() {
+        $('#logo').fadeOut(function() {
+            $('#main').fadeIn(3000);
+            applause.start(0);
+            mainVisible = true;
+        });
     });
 });
