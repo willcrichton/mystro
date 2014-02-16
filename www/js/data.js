@@ -37,6 +37,9 @@ var dataProcessing = (function() {
     detectOrchLocCallback = function() {
         console.log('No location callback registered.');
     }
+    onBeatCallback = function() {
+        console.log('No beat callback registered.');
+    }
 
 
     // Gets the magnitude of a number vector with 0..2 indices
@@ -267,10 +270,19 @@ var dataProcessing = (function() {
     var MAX_TEMPO = 2*BASE_TEMPO;
     var MIN_TEMPO = parseInt(BASE_TEMPO/3);
     var TEMPO_SMOOTHING = 4;
+    var IGNORE_FIRST_N_BEATS = 3;
     // var BEAT_RANGE_LOW = .8; //Patrick takes care of this
     var BEAT_RANGE_HIGH = 1.2;
+    var numBeats = 0;
+
     function detectTempoChange(pointerTip, pointerSpeed, time){
         var isBeat = beatReceived(pointerTip, pointerSpeed);
+        if(isBeat) {
+            numBeats++;
+        }
+        if(numBeats <= TEMPO_SMOOTHING + IGNORE_FIRST_N_BEATS) {
+            return;
+        }
         
         // oldData is nonempty since the current frame is in it.
         oldData[oldData.length - 1].isBeat = isBeat;
@@ -278,19 +290,19 @@ var dataProcessing = (function() {
         var shouldBeBeat = time - lastBeatTime > BEAT_RANGE_HIGH*(60*1000)/tempo;
         
         if(isBeat || shouldBeBeat) {
-			oldBeats = lastnBeats(lastnBeats(TEMPO_SMOOTHING+1));
-	                if(oldBeats.length > 4) {
-					var newTempo = TEMPO_SMOOTHING/(time - (oldBeats[0].time))*(60*1000);
-					/*_.reduce(lastnBeats(TEMPO_SMOOTHING), function(a, b) {
-						return a.b;
-					}, 0)/TEMPO_SMOOTHING;
-					*/
-		            //console.log("time" + time);
-			    //console.log("oooo"   + oldBeats[0].time);
-			    //console.log("tempo just set to " + newTempo);
-			    tempo = clamp(newTempo, MIN_TEMPO, MAX_TEMPO);
-			    detectTempoChangeCallback(tempo);
-			}
+            oldBeats = lastnBeats(lastnBeats(TEMPO_SMOOTHING+1));
+                if(oldBeats.length > TEMPO_SMOOTHING) {
+                    var newTempo = TEMPO_SMOOTHING/(time - (oldBeats[0].time))*(60*1000);
+                    /*_.reduce(lastnBeats(TEMPO_SMOOTHING), function(a, b) {
+                        return a.b;
+                    }, 0)/TEMPO_SMOOTHING;
+                    */
+                    //console.log("time" + time);
+                //console.log("oooo"   + oldBeats[0].time);
+                //console.log("tempo just set to " + newTempo);
+                tempo = clamp(newTempo, MIN_TEMPO, MAX_TEMPO);
+                detectTempoChangeCallback(tempo);
+            }
         }
     }
 
@@ -300,41 +312,42 @@ var dataProcessing = (function() {
     // There are still bugs, I want to push out something so you guys
     // can use it first.
     function beatReceived(pointerTip, pointerSpeed){
-	//REQUIRES tempo != nan.
+    //REQUIRES tempo != nan.
         var V_SMOOTHNESS = 35;
-	var V_BEGIN = 50;
-	var TIMEDELAY = (3/5)*(60000/tempo);      //Calibrate based on tempo
-	var EPSILON = (3*lastBeatDist)/5;        //Calibrate based on intensity (if exists)
-	var returnVar = false;    // this variable is dumb.
-	var COSTHRES = -0.25
+    var V_BEGIN = 50;
+    var TIMEDELAY = (3/5)*(60000/tempo);      //Calibrate based on tempo
+    var EPSILON = (3*lastBeatDist)/5;        //Calibrate based on intensity (if exists)
+    var returnVar = false;    // this variable is dumb.
+    var COSTHRES = -0.25
 
 
-	
+    
         if(pointerTip != null){
             var oldvs = oldData.slice(-V_BEGIN, (-V_BEGIN + V_SMOOTHNESS)).
-		        filter(function(x){return x.pointerSpeed != null;}).
-		        map(function(y){return y.pointerSpeed});
+                filter(function(x){return x.pointerSpeed != null;}).
+                map(function(y){return y.pointerSpeed});
             if(oldvs.length > 5){
-		oldvs.push(lastAverageV);
-	    }
-	    var avgVel = averageVector3(oldvs);
-	    var beatSign = cosine([avgVel[0], avgVel[1], 0], [pointerSpeed[0], pointerSpeed[1], 0]);
-	    if(beatSign < COSTHRES){
-		//console.log(beatSign, magnitude3(pointerSpeed), (new Date().getTime() - lastBeatTime), distance2(pointerTip, lastBeatLoc) );
-		//console.log("For the above, time delay is" + TIMEDELAY + " and ep is" + EPSILON);
-	    }
-	    if( (beatSign < COSTHRES || magnitude3(pointerSpeed) < 30 ) 
-		&& (new Date().getTime() - lastBeatTime)> TIMEDELAY &&
-	        distance2(pointerTip, lastBeatLoc) > EPSILON ){
-		console.log(beatSign, distance2(pointerTip, lastBeatLoc), pointerTip, magnitude3(pointerSpeed), new Date().getTime() - lastBeatTime);
-		lastBeatTime = (new Date().getTime());
-		lastBeatDist = distance2(pointerTip, lastBeatLoc);
-		console.log(lastBeatDist);
-		console.log("Tempo is " + tempo);
-		lastBeatLoc = pointerTip;
-		returnVar = true;
+        oldvs.push(lastAverageV);
+        }
+        var avgVel = averageVector3(oldvs);
+        var beatSign = cosine([avgVel[0], avgVel[1], 0], [pointerSpeed[0], pointerSpeed[1], 0]);
+        if(beatSign < COSTHRES){
+        //console.log(beatSign, magnitude3(pointerSpeed), (new Date().getTime() - lastBeatTime), distance2(pointerTip, lastBeatLoc) );
+        //console.log("For the above, time delay is" + TIMEDELAY + " and ep is" + EPSILON);
+        }
+        if( (beatSign < COSTHRES || magnitude3(pointerSpeed) < 30 ) 
+        && (new Date().getTime() - lastBeatTime)> TIMEDELAY &&
+            distance2(pointerTip, lastBeatLoc) > EPSILON ){
+        console.log(beatSign, distance2(pointerTip, lastBeatLoc), pointerTip, magnitude3(pointerSpeed), new Date().getTime() - lastBeatTime);
+        lastBeatTime = (new Date().getTime());
+        lastBeatDist = distance2(pointerTip, lastBeatLoc);
+        console.log(lastBeatDist);
+        console.log("Tempo is " + tempo);
+        lastBeatLoc = pointerTip;
+        returnVar = true;
+        onBeatCallback();
             }
-	    lastAverageV = pointerSpeed;
+        lastAverageV = pointerSpeed;
 
         }
         return returnVar;
@@ -450,6 +463,9 @@ var dataProcessing = (function() {
         },
         onDetectOrchLoc: function(callback) {
             detectOrchLocCallback = callback;
+        },
+        onBeat: function(callback) {
+            onBeatCallback = callback;
         }
     }
 })();
