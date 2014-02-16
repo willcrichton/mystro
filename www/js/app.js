@@ -3,7 +3,7 @@ var Hue;
 $(function() {
     // n = 0, 1, 2
     function hueURL(n) {
-        return 'http://192.168.1.147/api/1234567890/groups/0/action';
+        return 'http://10.201.7.131/api/1234567890/groups/0/action';
     }
 
     // Converts a number from 0.0 to 1.0 to a color from blue to red
@@ -20,13 +20,14 @@ $(function() {
     var lastMessage = 0;
 
     // How long (in milliseconds) to wait in between messages
-    var MIN_INTERVAL = 500;
+    var MIN_INTERVAL = 150;
 
     function sendToHue(URL, lightData) {
         nextURL = URL;
         nextData = lightData;
     }
 
+    var numberWaitingOn = 0;
     window.setInterval(function() {
         if(nextURL === null || nextData === null) {
             return;
@@ -45,11 +46,13 @@ $(function() {
                     } else { 
                         response = 'Error ' + http.status;
                     }
-                    //console.log(response);
+                    numberWaitingOn--;
+                    console.log('only waiting on  ' + numberWaitingOn + ' updates');
                 }
             }
             http.send(JSON.stringify(nextData));
-            //console.log('sent http request');
+            numberWaitingOn++;
+            console.log('still waiting on ' + numberWaitingOn + ' updates');
         }
         nextURL = null;
         nextData = null;
@@ -104,9 +107,10 @@ $(function() {
 
 $(function() {
     Hue.setup();
-    onDetectIntensityChange(function(normedIntensity) {
+    dataProcessing.onDetectIntensityChange(function(normedIntensity) {
+        //console.log('Doin it!'); // TODO remove
         Hue.setColor(normedIntensity);
-    }
+    });
 
     var ctl = new Leap.Controller({enableGestures: true});
 
@@ -283,7 +287,7 @@ $(function() {
             setVolumeFill(selected);
         }
         //console.log('Max volume: ' + maxVol);
-        Hue.setColor(maxVol/3);
+        //Hue.setColor(maxVol/3);
     });
 
     dataProcessing.onDetectOrchLoc(function(pair) {

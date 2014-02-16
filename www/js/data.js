@@ -37,6 +37,7 @@ var dataProcessing = (function() {
     detectSelectCallback = function() { }
     detectVolumeChangeCallback = function() { }
     detectTempoChangeCallback = function() { }
+    detectIntensityChangeCallback = function() { }
     detectOrchLocCallback = function() { }
     onBeatCallback = function() { }
     onStartCallback = function() { }
@@ -199,8 +200,13 @@ var dataProcessing = (function() {
         var isBeat = beatReceived(pointerTip, pointerSpeed);
         if(isBeat) {
             numBeats++;
+            console.log('################ Beat ################');
+            detectIntensityChange(time);
         }
         oldData[oldData.length - 1].isBeat = isBeat;
+
+        // We got a new beat! update the intensity!
+        //console.log('Entering detectIntensityChange'); // TODO remove
 
         if(numBeats <= TEMPO_SMOOTHING + IGNORE_FIRST_N_BEATS) {
             return;
@@ -231,7 +237,7 @@ var dataProcessing = (function() {
     DIST_UPPER_BOUND = 450;
     var INTENSITY_SMOOTHING = TEMPO_SMOOTHING;
     function detectIntensityChange(time) {
-        oldData.beatDist = lastBeatDist;
+        oldData[oldData.length - 1].beatDist = lastBeatDist;
         if(numBeats <= INTENSITY_SMOOTHING + IGNORE_FIRST_N_BEATS) {
             return;
         }
@@ -241,16 +247,20 @@ var dataProcessing = (function() {
         
         var oldBeats = lastnBeats(INTENSITY_SMOOTHING+1);
         if(oldBeats.length > INTENSITY_SMOOTHING) {
+            //console.log(oldBeats);
             var mapped = _.map(oldBeats, function(beat) {
                 return beat.beatDist;
             });
             var avgDist = (_.reduce(mapped, function(a, b) { 
                 return a+b;
             }, 0))/(INTENSITY_SMOOTHING+1);
+            
+            //console.log(avgDist);
 
             var clamped = clamp(avgDist, DIST_LOWER_BOUND, DIST_UPPER_BOUND);
             var normalized = (clamped - DIST_LOWER_BOUND)/DIST_UPPER_BOUND;
 
+            //console.log('Now were gonna change the color.'); // TODO
             detectIntensityChangeCallback(normalized);
         } else {
             throw new Error('lastnBeats is malfunctioning');
@@ -288,7 +298,7 @@ var dataProcessing = (function() {
                 distance2(pointerTip, lastBeatLoc) > EPSILON ){
                 lastBeatTime = (new Date().getTime());
                 lastBeatDist = distance2(pointerTip, lastBeatLoc);
-                console.log("Tempo is " + tempo);
+                //console.log("Tempo is " + tempo);
                 lastBeatLoc = pointerTip;
                 returnVar = true;
                 onBeatCallback();
@@ -402,7 +412,7 @@ var dataProcessing = (function() {
             detectTempoChangeCallback = callback;
         },
         onDetectIntensityChange: function(callback) {
-            onDetectIntesityCallback = callback;
+            detectIntensityChangeCallback = callback;
         },
         onDetectOrchLoc: function(callback) {
             detectOrchLocCallback = callback;
