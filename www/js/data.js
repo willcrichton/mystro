@@ -249,7 +249,9 @@ var dataProcessing = (function() {
         var arr = [];
         var beatsSeen = 0;
         for(var i = oldData.length - 1; i >= 0; i--) {
+            //console.log(i);
             if(oldData[i].isBeat) {
+                //console.log('Index ' + i + ' is a beat');
                 beatsSeen++;
                 arr.unshift(oldData[i]);
                 if(beatsSeen === n) {
@@ -274,12 +276,13 @@ var dataProcessing = (function() {
         if(isBeat) {
             numBeats++;
         }
+        oldData[oldData.length - 1].isBeat = isBeat;
+        //console.log('numBeats = ' + numBeats);
         if(numBeats <= TEMPO_SMOOTHING + IGNORE_FIRST_N_BEATS) {
             return;
         }
         
         // oldData is nonempty since the current frame is in it.
-        oldData[oldData.length - 1].isBeat = isBeat;
         //console.log('Index ' + (oldData.length - 1) + ' isBeat= ' + isBeat);
         
         var shouldBeBeat = time - lastBeatTime > BEAT_RANGE_HIGH*(60*1000)/tempo;
@@ -287,14 +290,16 @@ var dataProcessing = (function() {
         if(isBeat || shouldBeBeat) {
             var oldBeats;
             if(shouldBeBeat) {
-                oldBeats = lastnBeats(lastnBeats(TEMPO_SMOOTHING));
+                oldBeats = lastnBeats(TEMPO_SMOOTHING);
                 oldBeats.push(oldData[oldData.length - 1]);
             } else {
-                oldBeats = lastnBeats(lastnBeats(TEMPO_SMOOTHING+1));
+                oldBeats = lastnBeats(TEMPO_SMOOTHING+1);
             }
             if(oldBeats.length > TEMPO_SMOOTHING) {
-                var newTempo = TEMPO_SMOOTHING/(time - (oldBeats[0].time))*(60*1000);
-                //console.log('Old beats: ');
+                var newTempo = (60*1000)*TEMPO_SMOOTHING/(time - (oldBeats[0].time));
+                //console.log('time =  ' + time);
+                //console.log('oldBeats[0].time = ' + oldBeats[0].time);
+                //console.log('time - ....time =  ' + (time - oldBeats[0].time));
                 for(var i = 0; i < TEMPO_SMOOTHING + 1; i++) {
                     //console.log(oldBeats[i].time);
                 }
@@ -307,6 +312,10 @@ var dataProcessing = (function() {
                 //console.log("tempo just set to " + newTempo);
                 tempo = clamp(newTempo, MIN_TEMPO, MAX_TEMPO);
                 detectTempoChangeCallback(tempo);
+            } else {
+                //console.log('Error: oldBeats.length = ' + oldBeats.length);
+                //console.log('Error: numBeats = ' + numBeats);
+                throw new Error('lastnBeats is malfunctioning');
             }
         }
     }
@@ -394,7 +403,8 @@ var dataProcessing = (function() {
         //REQUIRES tempo != nan.
         var V_SMOOTHNESS = 35;
         var V_BEGIN = 50;
-        var TIMEDELAY = (3/5)*(60000/tempo);      //Calibrate based on tempo
+       // var TIMEDELAY = (3/5)*(60000/tempo);      //Calibrate based on tempo
+        var TIMEDELAY = (300);
         var EPSILON = (3*lastBeatDist)/5;        //Calibrate based on intensity (if exists)
         var returnVar = false;    // this variable is dumb.
         var COSTHRES = -0.25
