@@ -104,6 +104,10 @@ $(function() {
 
 $(function() {
     Hue.setup();
+    onDetectIntensityChange(function(normedIntensity) {
+        Hue.setColor(normedIntensity);
+    }
+
     var ctl = new Leap.Controller({enableGestures: true});
 
     ctl.on('frame', function(frame){
