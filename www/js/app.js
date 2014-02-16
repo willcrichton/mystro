@@ -281,6 +281,7 @@ $(function() {
     var time = new Date().getTime();
     var frames = [];
     var NUM_FRAMES = 3;
+    var BASE_TEMPO = 108;
     dataProcessing.onDetectTempoChange(function() {
         var cur = new Date().getTime();
 
@@ -294,7 +295,7 @@ $(function() {
         });
 
         avg /= frames.length;
-        avg /= 92;
+        avg /= BASE_TEMPO;
 
         sources.forEach(function(source) {
             var oldRate = source.playbackRate.value;

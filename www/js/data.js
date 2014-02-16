@@ -12,6 +12,7 @@ var dataProcessing = (function() {
     var currentlyTouched = 0;
     var lastBeatTime = 0;
     var lastBeatLoc = [-1000,-1000,1000]; //intialized outside of range.
+    var tempo = null;
 
     detectSelectCallback = function() {
         //console.log('No select callback registered.');
@@ -81,13 +82,12 @@ var dataProcessing = (function() {
     }
 
     function relativeAcceleration(pointerSpeed, n){
-        if(oldData.length >= n){
+        if(oldData.length >= n) {
             var lastn = oldData.slice(-n).filter(function(y){return y.pointerSpeed != null && (((new Date().getTime()) - y.time) < 1000)}).map(function(x){return x.pointerSpeed});
             var avgOldSpeed = averageVector3(lastn);
             return $V(pointerSpeed).subtract($V(avgOldSpeed)).elements;
-        }
-        else{
-            return 0;            
+        } else {
+            return 0;
         }
     }
 
@@ -107,7 +107,6 @@ var dataProcessing = (function() {
                 currentlyTouched = 0;
                 detectSelectCallback(false);
             }
-
         }
     }
 
@@ -224,22 +223,53 @@ var dataProcessing = (function() {
     }
 
     function distance2(pt, ps){
-	return magnitude3([pt[0]-ps[0], pt[1]-ps[1], 0]);
+        return magnitude3([pt[0]-ps[0], pt[1]-ps[1], 0]);
     }
 
     // Calls the callback function if current state is a beat.
-     var NUM_FRAMES = 25;
+    var NUM_FRAMES = 25;
     var TIME_DELAY = 350;
     var BEAT_THRESHOLD = -7000;
     var lastSpeeds = [];
 
+    // Gets an array of the last n frames which had beats. If there aren't n of
+    // them, returns a smaller array.
+    function lastnBeats(n) {
+        var arr = [];
+        var numBeats = 0;
+        for(var i = oldData.length - 1; i >= 0; i--) {
+            if(oldData[i].isBeat) {
+                arr.push(oldData[i]);
+                if(numBeats === n) {
+                    return arr;
+                }
+            }
+        }
+        return arr;
+    }
 
     /* To ensure backwards compatibilty. This needs to change */
-    function detectTempoChange(pointerTip, pointerSpeed){
-	console.log("delete this line");
-	if(beatReceived(pointerTip, pointerSpeed)){
-	    detectTempoChangeCallback(true);		
-	}
+    var MAX_TEMPO = 2*BASE_TEMPO;
+    var MIN_TEMPO = parseInt(BASE_TEMPO/3);
+    var TEMPO_SMOOTHING = 4;
+    // var BEAT_RANGE_LOW = .8; //Patrick takes care of this
+    var BEAT_RANGE_HIGH = 1.2;
+    function detectTempoChange(pointerTip, pointerSpeed, time){
+        var isBeat = beatReceived(pointerTip, pointerSpeed);
+        
+        // oldData is nonempty since the current frame is in it.
+        oldData[oldData.length - 1].isBeat = isBeat;
+        
+        var shouldBeBeat = time - lastBeatTime > BEAT_RANGE_HIGH*(60*1000)/tempo;
+        
+        if(isBeat || shouldBeBeat) {
+            var newTempo = _.reduce(lastnBeats(TEMPO_SMOOTHING), function(a, b) {
+                return a+b;
+            }, 0);
+            tempo = clamp(newTempo, MIN_TEMPO, MAX_TEMPO);
+                    
+            detectTempoChangeCallback(tempo);
+        }
     }
 
     // Preliminary detectTempoChange function.
@@ -249,10 +279,10 @@ var dataProcessing = (function() {
     // can use it first.
     function beatReceived(pointerTip, pointerSpeed){
         var V_SMOOTHNESS = 10;
-	var V_BEGIN = 30;
-	var TIMEDELAY = 300;      //Calibrate based on tempo
-	var EPSILON = 175;        //Calibrate based on intensity (if exists)
-	var returnVar = false;    // this variable is dumb.
+        var V_BEGIN = 30;
+        var TIMEDELAY = 300;      //Calibrate based on tempo
+        var EPSILON = 175;        //Calibrate based on intensity (if exists)
+        var returnVar = false;    // this variable is dumb.
         if(pointerTip != null){
             var oldvs = oldData.slice(-V_BEGIN, (-V_BEGIN + V_SMOOTHNESS)).
 		        filter(function(x){return x.pointerSpeed != null;}).
