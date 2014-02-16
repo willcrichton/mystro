@@ -232,6 +232,19 @@ $(function() {
         $('.instrument:nth-child(' + (i+1) + ')').css('background-position', 'left ' + fill + '%');
     }
 
+    function onBeat() {
+        var $particle, x, y;
+        for (var i = 0; i < 10; i++) {
+            $particle = $('<div class="particle"></div>');
+            x = Math.random() - 0.5;
+            y = Math.random() - 0.5;
+            $('#dot').append($particle);
+            $particle.animate({top: (x * 40), left: (y * 40), opacity: 0}, 400, function() {
+                $(this).remove();
+            });
+        }
+    }
+
     dataProcessing.onDetectVolumeChange(function(delta) {
         if (isNaN(delta)) return;
 
@@ -239,7 +252,7 @@ $(function() {
         if (selected === -1) {
             gains.forEach(function(node, i) {
                 node.gain.value = clamp(node.gain.value + delta * 3, 0, 3.0);
-                maxVol = (node.gain.value > maxVol) ? node.gain.value : maxVol;
+                maxVol = Math.max(node.gain.value, maxVol)
                 setVolumeFill(i);
             });
         } else {
@@ -309,6 +322,4 @@ $(function() {
             selected = -1;
         }
     });
-
-
 });
