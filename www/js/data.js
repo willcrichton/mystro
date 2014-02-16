@@ -218,8 +218,9 @@ var dataProcessing = (function() {
 
     /* To ensure backwards compatibilty. This needs to change */
     function detectTempoChange(pointerTip, pointerSpeed){
+	console.log("delete this line");
 	if(beatReceived(pointerTip, pointerSpeed)){
-	    detectVolumeChangeCallback(true);		
+	    detectTempoChangeCallback(true);		
 	}
     }
 
