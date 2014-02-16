@@ -16,6 +16,23 @@ var dataProcessing = (function() {
     var BASE_TEMPO = C.BASE_TEMPO;
     var tempo = BASE_TEMPO;
 
+    var MIN_PALM_HEIGHT = 100;
+    var MAX_PALM_HEIGHT = 500;
+
+    var NUM_FRAMES = 25;
+    var TIME_DELAY = 350;
+    var BEAT_THRESHOLD = -7000;
+    var lastSpeeds = [];
+
+    var MAX_TEMPO = 2*BASE_TEMPO;
+    var MIN_TEMPO = parseInt(BASE_TEMPO/3);
+    var TEMPO_SMOOTHING = 4;
+    var IGNORE_FIRST_N_BEATS = 2; //Used to be 3
+    // var BEAT_RANGE_LOW = .8; //Patrick takes care of this
+    var BEAT_RANGE_HIGH = 1.2;
+    var numBeats = 0;
+
+    var started = false;
     ////////////////////////// Default Callbacks  ///////////////////////////
     detectSelectCallback = function() { }
     detectVolumeChangeCallback = function() { }
@@ -38,7 +55,7 @@ var dataProcessing = (function() {
         return sum.multiply(1.0/vecs.length).elements;
     }
 
-    // NOT ACTUALLY A DOT PRODUCT. EDIT: dot product is now a real dot product
+    //Technically a variable dot product
     function dotP(a, b){
         var A = 1
         var B = 1
@@ -73,7 +90,7 @@ var dataProcessing = (function() {
         return Math.max(Math.min(x, b), a);
     }   
 
-    ////////////////////////// detect Functions  ///////////////////////////
+    ////////////////////////// Functions  ///////////////////////////
 
     // Calls back true if an instrumental group is selected.
     // Calls back false othe group is deselected otherwise.
@@ -97,8 +114,6 @@ var dataProcessing = (function() {
         }
     }
 
-    var MIN_PALM_HEIGHT = 100;
-    var MAX_PALM_HEIGHT = 500;
     function normedVol(absoluteVolDelta) {
         return absoluteVolDelta/(MAX_PALM_HEIGHT - MIN_PALM_HEIGHT);
     }
@@ -161,12 +176,6 @@ var dataProcessing = (function() {
         }
     }
 
-    // Calls the callback function if current state is a beat.
-    var NUM_FRAMES = 25;
-    var TIME_DELAY = 350;
-    var BEAT_THRESHOLD = -7000;
-    var lastSpeeds = [];
-
     // Gets an array of the last n frames which had beats. If there aren't n of
     // them, returns a smaller array.
     function lastnBeats(n) {
@@ -185,15 +194,6 @@ var dataProcessing = (function() {
         }
         return arr;
     }
-
-    /* To ensure backwards compatibilty. This needs to change */
-    var MAX_TEMPO = 2*BASE_TEMPO;
-    var MIN_TEMPO = parseInt(BASE_TEMPO/3);
-    var TEMPO_SMOOTHING = 4;
-    var IGNORE_FIRST_N_BEATS = 3;
-    // var BEAT_RANGE_LOW = .8; //Patrick takes care of this
-    var BEAT_RANGE_HIGH = 1.2;
-    var numBeats = 0;
 
     function detectTempoChange(pointerTip, pointerSpeed, time) {
         var isBeat = beatReceived(pointerTip, pointerSpeed);
@@ -235,8 +235,7 @@ var dataProcessing = (function() {
         //REQUIRES tempo != nan.
         var V_SMOOTHNESS = 35;
         var V_BEGIN = 50;
-       // var TIMEDELAY = (3/5)*(60000/tempo);      //Calibrate based on tempo
-        var TIMEDELAY = (300);
+        var TIMEDELAY = (3/5)*(60000/tempo);      //Calibrate based on tempo
         var EPSILON = (3*lastBeatDist)/5;        //Calibrate based on intensity (if exists)
         var returnVar = false;    // this variable is dumb.
         var COSTHRES = -0.25
@@ -252,17 +251,12 @@ var dataProcessing = (function() {
             }
             var avgVel = averageVector3(oldvs);
             var beatSign = cosine([avgVel[0], avgVel[1], 0], [pointerSpeed[0], pointerSpeed[1], 0]);
-            if(beatSign < COSTHRES){
-                //console.log(beatSign, magnitude3(pointerSpeed), (new Date().getTime() - lastBeatTime), distance2(pointerTip, lastBeatLoc) );
-                //console.log("For the above, time delay is" + TIMEDELAY + " and ep is" + EPSILON);
-            }
+
             if( (beatSign < COSTHRES || magnitude3(pointerSpeed) < 30 ) 
                 && (new Date().getTime() - lastBeatTime)> TIMEDELAY &&
                 distance2(pointerTip, lastBeatLoc) > EPSILON ){
-                console.log(beatSign, distance2(pointerTip, lastBeatLoc), pointerTip, magnitude3(pointerSpeed), new Date().getTime() - lastBeatTime);
                 lastBeatTime = (new Date().getTime());
                 lastBeatDist = distance2(pointerTip, lastBeatLoc);
-                console.log(lastBeatDist);
                 console.log("Tempo is " + tempo);
                 lastBeatLoc = pointerTip;
                 returnVar = true;
@@ -273,13 +267,6 @@ var dataProcessing = (function() {
         }
         return returnVar;
     }
-
-    // Helper for detectOrchLoc (Not used as of saturday morning)
-    // function detectRecentHandLoc(){
-    //     var LEFTEDGE = -300; 
-    //     var TOPEDGE = 400;
-    //     return [LEFTEDGE, TOPEDGE];
-    // }
 
     // Points to a region in the orchestra.    
     // Does simple physics vector addition with some bounds.
@@ -341,7 +328,6 @@ var dataProcessing = (function() {
         detectOrchLocCallback(finalNormedLoc);
     }
 
-    var started = false;
     return {
         // Called when the leapmotion gets new data.
         // pointerTip : array 0..2
@@ -371,7 +357,6 @@ var dataProcessing = (function() {
             });
 
             detectSelect(hands, frame);
-
             detectVolumeChange(handLoc, palmVelocity, time);
             detectTempoChange(pointerTip, pointerSpeed, time);
             detectOrchLoc(handLoc, fingerDir);
