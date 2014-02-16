@@ -3,7 +3,7 @@ var Hue;
 $(function() {
     // n = 0, 1, 2
     function hueURL(n) {
-        return 'http://10.201.7.131/api/1234567890/groups/0/action';
+        return 'http://192.168.1.103/api/1234567890/groups/0/action';
     }
 
     // Converts a number from 0.0 to 1.0 to a color from blue to red
@@ -15,6 +15,7 @@ $(function() {
     // What message do we send next?
     var nextURL = null;
     var nextData = null;
+    var nextCallback = null;
 
     // When did we last send a message?
     var lastMessage = 0;
@@ -22,9 +23,10 @@ $(function() {
     // How long (in milliseconds) to wait in between messages
     var MIN_INTERVAL = 150;
 
-    function sendToHue(URL, lightData) {
+    function sendToHue(URL, lightData, callback) {
         nextURL = URL;
         nextData = lightData;
+        nextCallback = callback;
     }
 
     var numberWaitingOn = 0;
@@ -48,6 +50,9 @@ $(function() {
                     }
                     numberWaitingOn--;
                     console.log('only waiting on  ' + numberWaitingOn + ' updates');
+                    if(nextCallback !== null && nextCallback !== undefined) {
+                        nextCallback();
+                    }
                 }
             }
             http.send(JSON.stringify(nextData));
@@ -56,12 +61,13 @@ $(function() {
         }
         nextURL = null;
         nextData = null;
+        nextCallback = null;
     }, MIN_INTERVAL);
 
     Hue = {
         // An object with keys like 'hue', 'bri', 'sat'...
-        send: function(newData) { 
-            sendToHue(hueURL(null), newData);
+        send: function(newData, callback) { 
+            sendToHue(hueURL(null), newData, callback);
         },
         // Integer in [0, \infty)
         setTransTime: function(time) {
@@ -92,6 +98,16 @@ $(function() {
                 'sat': saturation
             });
         },
+        animate: function() {
+            var context = this;
+            window.setTimeout(function() {
+                context.setWhite();
+                window.setTimeout(function() {
+                    context.setColor(1);
+                }, 585);
+            }, 520);
+        },
+            
         // Initialize with our favorite settings
         setup: function() {
             this.send({
@@ -99,6 +115,8 @@ $(function() {
                 'hue': getHue(0),
                 'transitiontime': 0,
                 'bri': 100
+            }, function() {
+                console.log('Hue ready...');
             });
         }
     };
@@ -110,6 +128,8 @@ $(function() {
     dataProcessing.onDetectIntensityChange(function(normedIntensity) {
         Hue.setColor(normedIntensity);
     });
+
+    dataProcessing.onWhiten(Hue.setWhite);
 
     var ctl = new Leap.Controller({enableGestures: true});
 
@@ -379,7 +399,7 @@ $(function() {
 	if(started){
 	    sources.forEach(function(source) {
 		if(bool){
-		    console.log("disconnect");
+		    //console.log("disconnect");
 		    source.disconnect(processor);
 		}
 		else{

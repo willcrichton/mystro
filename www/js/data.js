@@ -47,6 +47,7 @@ var dataProcessing = (function() {
     detectOnPauseCallback = function() { }
     onBeatCallback = function() { }
     onStartCallback = function() { }
+    onWhitenCallback = function() { }
 
 
 
@@ -130,7 +131,7 @@ var dataProcessing = (function() {
         else if(enterGroup > pos && pos >= exitGroup){row = 1}
         else if(pos >= enterGroup){row = 0}
         else {throw new Error('Invalid Position in next state');}
-        console.log(row, state);
+        //console.log(row, state);
         return stateTable[row][state];
     }
     // Calls back true if an instrumental group is selected.
@@ -245,7 +246,11 @@ var dataProcessing = (function() {
         if(isBeat) {
             numBeats++;
             console.log('################ Beat ################');
-            detectIntensityChange(time);
+            if(numBeats === 2) {
+                onWhitenCallback();
+            } else {
+                detectIntensityChange(time);
+            }
         }
         oldData[oldData.length - 1].isBeat = isBeat;
 
@@ -465,6 +470,9 @@ var dataProcessing = (function() {
         },
         onStart: function(callback) {
             onStartCallback = callback;
+        },
+        onWhiten: function(callback) {
+            onWhitenCallback = callback;
         },
         onDetectOnPause: function(callback) {
             detectOnPauseCallback = callback;
