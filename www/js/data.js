@@ -16,6 +16,7 @@ var dataProcessing = (function() {
         //     ...
         //  }
     ]
+
     var lastAverageV = [0,0,0];
     var currentlyTouched = 0;
     var lastBeatTime = 0;
@@ -33,11 +34,12 @@ var dataProcessing = (function() {
     onStartCallback = function() { }
 
 
-    // Gets the magnitude of a number vector with 0..2 indices
+    ////////////////////////// Vector Functions  ///////////////////////////
     function magnitude3(vec) {
-        return Math.sqrt(vec[0]*vec[0] + vec[1]*vec[1] + vec[2]*vec[2]);
+        return Leap.vec3.len(vec);
     }
 
+    
     function averageVector3(vecs){
         if(vecs.length === 0)
             return [0, 0, 0];
