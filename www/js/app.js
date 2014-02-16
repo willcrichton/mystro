@@ -45,11 +45,11 @@ $(function() {
                     } else { 
                         response = 'Error ' + http.status;
                     }
-                    console.log(response);
+                    //console.log(response);
                 }
             }
             http.send(JSON.stringify(nextData));
-            console.log('sent http request');
+            //console.log('sent http request');
         }
         nextURL = null;
         nextData = null;
@@ -270,6 +270,7 @@ $(function() {
             maxVol = (gains[selected].gain.value > maxVol) ? node.gain.value : maxVol;
             setVolumeFill(selected);
         }
+        //console.log('Max volume: ' + maxVol);
         Hue.setColor(maxVol/3);
     });
 
