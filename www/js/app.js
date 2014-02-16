@@ -104,9 +104,10 @@ $(function() {
 
 $(function() {
     Hue.setup();
-    onDetectIntensityChange(function(normedIntensity) {
+
+    dataProcessing.onDetectIntensityChange(function(normedIntensity) {
         Hue.setColor(normedIntensity);
-    }
+    });
 
     var ctl = new Leap.Controller({enableGestures: true});
 
@@ -259,7 +260,7 @@ $(function() {
     var started = false;
     var mainVisible = false;
     dataProcessing.onDetectVolumeChange(function(delta) {
-        if (isNaN(delta) || !gains.length) return;
+        if (isNaN(delta) || !gains.length || selectState === 0) return;
 
         if (!started && mainVisible && delta > 0.01) {
             console.log('Starting...');
@@ -305,30 +306,6 @@ $(function() {
 
     var currentTempo = 1;
     dataProcessing.onDetectTempoChange(function(tempo) {
-
-        /*var cur = new Date().getTime();
-
-        if (frames.length == NUM_FRAMES) frames.pop();
-        frames.unshift(1 / (cur - time) * 1000 * 60);
-        time = cur;
-
-        var avg = 0;
-        frames.forEach(function(bpm) {
-            avg += bpm;
-        });
-
-        avg /= frames.length;
-        avg /= C.BASE_TEMPO;
-
-        sources.forEach(function(source) {
-            var oldRate = source.playbackRate.value;
-
-            if (Math.abs(oldRate - avg) > 0.3) {
-                source.playbackRate.value = avg;
-                pitchShift = 0.33 * (2 - oldRate);
-            }
-        });*/
-
         currentTempo = tempo / C.BASE_TEMPO;
     });
 
@@ -341,8 +318,11 @@ $(function() {
     }, 100);
 
     var selected = -1;
-    dataProcessing.onDetectSelectChange(function(down) {
-        if (down) {
+    var selectState = 0;
+    dataProcessing.onDetectSelectChange(function(state) {
+        selectState = state;
+
+        if (state === 2) {
             var $instrument = $('.instrument.hover');
             if (!$instrument.length) return;
 
@@ -353,7 +333,7 @@ $(function() {
         } else {
             $('.instrument').removeClass('active');
             selected = -1;
-        }
+        } 
     });
 
     var beatCount = 0;

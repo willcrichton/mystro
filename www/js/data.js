@@ -105,6 +105,7 @@ var dataProcessing = (function() {
         else if(70 > pos && pos >= 20){row = 1}
         else if(pos >= 70){row = 0}
         else {throw new Error('Invalid Position in next state');}
+        console.log(row, state);
         return stateTable[row][state];
     }
 
@@ -124,9 +125,12 @@ var dataProcessing = (function() {
             }
 
             if(frame.pointable(relevantFinger).valid != false){
-                var distance = frame.pointable(relevantFinger).stabilizedTipPosition;   
-                curState = nextState(distance, curState);
-                if(curState != 3){detectSelectCallback(curState);}
+                var distance = frame.pointable(relevantFinger).stabilizedTipPosition[2];   
+                var temp = nextState(distance, curState);
+                if(temp != 3){
+                    curState = temp;
+                    detectSelectCallback(curState);
+                }
             }
         }
     }
