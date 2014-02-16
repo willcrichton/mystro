@@ -299,8 +299,7 @@ $(function() {
     var frames = [];
     var NUM_FRAMES = 3;
     
-    var rates = [0.75, 1.0, 1.25];
-    dataProcessing.onDetectTempoChange(function(index) {
+    dataProcessing.onDetectTempoChange(function(tempo) {
 
         /*var cur = new Date().getTime();
 
@@ -325,11 +324,9 @@ $(function() {
             }
         });*/
 
-        //console.log(index);
-
         sources.forEach(function(source) {
-            source.playbackRate.value = rates[index];
-            pitchShift = 0.33 * (2 - rates[index]);
+            source.playbackRate.value = tempo / C.BASE_TEMPO;
+            pitchShift = 0.33 * (2 - tempo / C.BASE_TEMPO);
         });
     });
 
@@ -347,6 +344,19 @@ $(function() {
             $('.instrument').removeClass('active');
             selected = -1;
         }
+    });
+
+    var beatCount = 0;
+    dataProcessing.onBeat(function() {
+        beatCount++;
+
+        if (beatCount % 12 === 0) {
+            $('#score').animate({
+                scrollTop: '+=400',
+            }, 200);
+        }
+
+        onBeat();
     });
 
     dataProcessing.onStart(function() {
