@@ -33,6 +33,11 @@ var dataProcessing = (function() {
     var numBeats = 0;
 
     var started = false;
+
+    var enterSingle = -70;
+    var exitSingle = -20;
+    var exitGroup = 70;
+    var enterGroup = 120;
     ////////////////////////// Default Callbacks  ///////////////////////////
     detectSelectCallback = function() { }
     detectVolumeChangeCallback = function() { }
@@ -119,11 +124,11 @@ var dataProcessing = (function() {
                       [1,3,3],
                       [2,2,3]];
         var row = 0;
-        if(-50 > pos){row = 4}
-        else if(0 > pos && pos >= -50){row = 3}
-        else if(20 > pos && pos >= 0){row = 2}
-        else if(70 > pos && pos >= 20){row = 1}
-        else if(pos >= 70){row = 0}
+        if(enterSingle > pos){row = 4}
+        else if(exitSingle > pos && pos >= enterSingle){row = 3}
+        else if(exitGroup > pos && pos >= exitSingle){row = 2}
+        else if(enterGroup > pos && pos >= exitGroup){row = 1}
+        else if(pos >= enterGroup){row = 0}
         else {throw new Error('Invalid Position in next state');}
         console.log(row, state);
         return stateTable[row][state];

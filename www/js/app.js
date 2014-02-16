@@ -262,7 +262,30 @@ $(function() {
     var started = false;
     var mainVisible = false;
     dataProcessing.onDetectVolumeChange(function(delta) {
-        if (isNaN(delta) || !gains.length || selectState === 0) return;
+        // if(delta > 0) {
+        //     if(delta < 0.01) {
+        //         delta = 0;
+        //     } else {
+        //         delta -= 0.01;
+        //     }
+        // } else {
+        //     if(delta > -0.01) {
+        //         delta = 0;
+        //     } else {
+        //         delta += 0.01
+        //     }
+        // }
+        // } && delta < 0.1){
+        //     delta = 0;
+        // } else{
+        //     delta = delta - 0.1;
+        // }
+        // if(delta < 0 && delta > -0.1){
+        //     delta = 0;
+        // } else{
+        //     delta = delta + 0.1;
+        // }
+        if (isNaN(delta) || !gains.length || selectState === 1) return;
 
         if (!started && mainVisible && delta > 0.01) {
             console.log('Starting...');
@@ -275,13 +298,13 @@ $(function() {
         var maxVol = 0;
         if (selected === -1 || selected >= gains.length) {
             gains.forEach(function(node, i) {
-                node.gain.value = clamp(node.gain.value + delta * 3, 0, 3.0);
+                node.gain.value = clamp(node.gain.value + delta * 4, 0, 3.0);
                 maxVol = Math.max(node.gain.value, maxVol)
                 setVolumeFill(i);
             });
         } else {
             var node = gains[selected];
-            gains[selected].gain.value = clamp(node.gain.value + delta * 3, 0, 3.0);
+            gains[selected].gain.value = clamp(node.gain.value + delta * 4, 0, 3.0);
             maxVol = (gains[selected].gain.value > maxVol) ? node.gain.value : maxVol;
             setVolumeFill(selected);
         }
@@ -292,7 +315,7 @@ $(function() {
     dataProcessing.onDetectOrchLoc(function(pair) {
         var x = pair[0], y = pair[1];
 
-        if (selected !== -1 || selectState === 0) return;
+        if (selected !== -1) /*|| selectState === 1)*/ return;
 
         $('#dot').css('left', x * $('#instruments').width());
 
@@ -320,11 +343,11 @@ $(function() {
     }, 100);
 
     var selected = -1;
-    var selectState = 0;
+    var selectState = 1;
     dataProcessing.onDetectSelectChange(function(state) {
         selectState = state;
 
-        if (state === 2) {
+        if (selectState === 2) {
             var $instrument = $('.instrument.hover');
             if (!$instrument.length) return;
 
