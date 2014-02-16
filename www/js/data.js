@@ -42,6 +42,21 @@ var dataProcessing = (function() {
         return sum.multiply(1.0/vecs.length).elements;
     }
 
+    function frontMostPointable (pointables){
+        var zs = pointables.map(function(x){x[2]});
+        var index = _.indexOf(zs, _.min(zs));
+        return pointables[index];
+
+    }
+
+    function leftMostHand (hands){
+        var zs = hands.map(function(x){x[0]});
+        var index = _.indexOf(zs, _.min(zs));
+        return hands[index];
+
+    }
+
+
     // Use OLD DATA to caluate an average acceleration over the previous
     // n iterations.
     function historicalAcceleration(n){
@@ -81,7 +96,8 @@ var dataProcessing = (function() {
     function detectSelect(handLoc, hands) {
         if(handLoc !== null && hands[0].pointables.length > 0) {
             var distance = hands[0].pointables[0].stabilizedTipPosition;
-            //console.log(distance[2]);
+            console.log(distance[2]);
+
             if(distance[2] < -100 && currentlyTouched == 0){
                 currentlyTouched = 1;
                 detectSelectCallback(true);
@@ -220,8 +236,9 @@ var dataProcessing = (function() {
 
     /* To ensure backwards compatibilty. This needs to change */
     function detectTempoChange(pointerTip, pointerSpeed){
+	console.log("delete this line");
 	if(beatReceived(pointerTip, pointerSpeed)){
-	    detectVolumeChangeCallback(true);		
+	    detectTempoChangeCallback(true);		
 	}
     }
 

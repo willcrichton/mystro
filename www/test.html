@@ -1,14 +1,35 @@
 <p>Distance: <span id="distance">…</span></p>
 <script src="//js.leapmotion.com/0.4.0/leap.min.js"></script>
+<script src="//cdnjs.cloudflare.com/ajax/libs/underscore.js/1.5.2/underscore-min.js"></script>
 <script>
 var distanceDisplay = document.getElementById("distance");
+var set = false;
+var frontMostPointable = function(pointables){
+	var zs = pointables.map(function(x){x[2]});
+	var index = _.indexOf(zs, _.min(zs));
+	return pointables[index];
+
+}
+
+var leftMostHand = function(hands){
+	var zs = hands.map(function(x){x[0]});
+	var index = _.indexOf(zs, _.min(zs));
+	return hands[index];
+
+}
 
 var controller = new Leap.Controller();
 controller.on('frame', function(frame){
     if(frame.pointables.length > 0)
     {
-        var touchDistance = frame.pointables[0].touchDistance;
-        distanceDisplay.innerText = touchDistance;
+        var hands = frame.hands.filter(function(elem){return (elem.tools.length == 0)});
+        if(hands.length > 0 && hands[0].pointables.length > 0){
+        	var distance = hands[0].pointables[0].stabilizedTipPosition;
+        	distanceDisplay.innerText = "Set: " + set + " dist: " + Math.round(distance[2]);
+        	if(distance[2] < -100 && !set) {set = true;}
+        	if(distance[2] > 0 && set) {set = false;}
+        }
+        
     }
 });
 controller.connect();
