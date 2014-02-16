@@ -257,7 +257,7 @@ $(function() {
     dataProcessing.onDetectVolumeChange(function(delta) {
         if (isNaN(delta)) return;
 
-        console.log(started, mainVisible, delta);
+        //console.log(started, mainVisible, delta);
         if (!started && mainVisible && delta > 0.01) {
             console.log('Starting...');
             sources.forEach(function(source) {
