@@ -315,7 +315,6 @@ $(function() {
             var oldRate = source.playbackRate.value;
 
             if (Math.abs(oldRate - avg) > 0.3) {
-                console.log(avg);
                 source.playbackRate.value = avg;
                 pitchShift = 0.33 * (2 - oldRate);
             }
