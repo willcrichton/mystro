@@ -290,7 +290,7 @@ $(function() {
     dataProcessing.onDetectOrchLoc(function(pair) {
         var x = pair[0], y = pair[1];
 
-        if (selected !== -1) return;
+        if (selected !== -1 || selectState === 0) return;
 
         $('#dot').css('left', x * $('#instruments').width());
 
