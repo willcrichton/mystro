@@ -20,7 +20,7 @@ $(function() {
     var lastMessage = 0;
 
     // How long (in milliseconds) to wait in between messages
-    var MIN_INTERVAL = 100;
+    var MIN_INTERVAL = 500;
 
     function sendToHue(URL, lightData) {
         nextURL = URL;
@@ -91,10 +91,12 @@ $(function() {
         },
         // Initialize with our favorite settings
         setup: function() {
-            this.setTransTime(0);
-            this.setBrightness(180);
-            this.setColor(0);
-            this.setSat(220);
+            this.send({
+                'sat': 240,
+                'hue': getHue(0),
+                'transitiontime': 0,
+                'bri': 100
+            });
         }
     };
 });
@@ -255,16 +257,20 @@ $(function() {
     dataProcessing.onDetectVolumeChange(function(delta) {
         if (isNaN(delta)) return;
 
+        var maxVol = 0;
         if (selected === -1) {
             gains.forEach(function(node, i) {
                 node.gain.value = clamp(node.gain.value + delta * 3, 0, 3.0);
+                maxVol = (node.gain.value > maxVol) ? node.gain.value : maxVol;
                 setVolumeFill(i);
             });
         } else {
             var node = gains[selected];
             gains[selected].gain.value = clamp(node.gain.value + delta * 3, 0, 3.0);
+            maxVol = (gains[selected].gain.value > maxVol) ? node.gain.value : maxVol;
             setVolumeFill(selected);
         }
+        Hue.setColor(maxVol/3);
     });
 
     dataProcessing.onDetectOrchLoc(function(pair) {
@@ -307,9 +313,6 @@ $(function() {
                 pitchShift = 0.33 * (2 - oldRate);
             }
         });
-
-        // Convert the current tempo to [0.0, 1.0] and set that to the color
-        Hue.setColor(frames[0]/250);
     });
 
     var selected = -1;
