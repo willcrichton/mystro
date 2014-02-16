@@ -37,7 +37,7 @@ var dataProcessing = (function() {
     var enterSingle = -70;
     var exitSingle = -20;
     var exitGroup = 70;
-    var enterGroup = 120;
+    var enterGroup = 2000;
     ////////////////////////// Default Callbacks  ///////////////////////////
     detectSelectCallback = function() { }
     detectVolumeChangeCallback = function() { }

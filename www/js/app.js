@@ -307,7 +307,7 @@ $(function() {
         // } else{
         //     delta = delta + 0.1;
         // }
-        if (isNaN(delta) || !gains.length || selectState === 1) return;
+        if (isNaN(delta) || !gains.length || selectState === middleIsNone) return;
 
         if (!started && mainVisible && delta > 0.01) {
             console.log('Starting...');
@@ -320,7 +320,7 @@ $(function() {
         var maxVol = 0;
         if (selected === -1 || selected >= gains.length) {
             gains.forEach(function(node, i) {
-                node.gain.value = clamp(node.gain.value + delta * 4, 0, 3.0);
+                node.gain.value = clamp(node.gain.value + delta * 6, 0, 3.0);
                 maxVol = Math.max(node.gain.value, maxVol)
                 setVolumeFill(i);
             });
@@ -353,7 +353,7 @@ $(function() {
 
     var currentTempo = 1;
     dataProcessing.onDetectTempoChange(function(tempo) {
-        if (sounds[0] === 'beethoven.mp3') {
+        if (IS_BEETHOVEN) {
             currentTempo = tempo / C.BASE_TEMPO;
         }
     });
@@ -367,7 +367,8 @@ $(function() {
     }, 100);
 
     var selected = -1;
-    var selectState = 1;
+    var middleIsNone = 0;
+    var selectState = middleIsNone;
     dataProcessing.onDetectSelectChange(function(state) {
         selectState = state;
 
@@ -399,19 +400,19 @@ $(function() {
     });
 
 
-    dataProcessing.onDetectOnPause(function(bool){
-	if(started){
-	    sources.forEach(function(source) {
-		if(bool){
-		    //console.log("disconnect");
-		    source.disconnect(processor);
-		}
-		else{
-		    source.connect(processor);
-		}
-	    });
-	}
-    });
+ //    dataProcessing.onDetectOnPause(function(bool){
+	// if(started){
+	//     sources.forEach(function(source) {
+	// 	if(bool){
+	// 	    //console.log("disconnect");
+	// 	    source.disconnect(processor);
+	// 	}
+	// 	else{
+	// 	    source.connect(processor);
+	// 	}
+	//     });
+	// }
+ //    });
 	
 	    
 
