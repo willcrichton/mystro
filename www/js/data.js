@@ -8,7 +8,7 @@ var dataProcessing = (function() {
     var oldData = [];
 
     var lastAverageV = [0,0,0];
-    var currentlyTouched = 0;
+    var curState = 0;
     var lastBeatTime = 0;
     var lastBeatLoc = [0, 0, 0]; //Chance of error is small
     var lastBeatDist = 1;
@@ -39,8 +39,10 @@ var dataProcessing = (function() {
     detectTempoChangeCallback = function() { }
     detectIntensityChangeCallback = function() { }
     detectOrchLocCallback = function() { }
+    detectOnPauseCallback = function() { }
     onBeatCallback = function() { }
     onStartCallback = function() { }
+
 
 
     ////////////////////////// Vector & helper Functions  ////////////////////
@@ -57,6 +59,7 @@ var dataProcessing = (function() {
     }
 
     //Technically a variable dot product
+    //Historically not actually a dot product.
     function dotP(a, b){
         var A = 1
         var B = 1
@@ -93,6 +96,38 @@ var dataProcessing = (function() {
 
     ////////////////////////// Functions  ///////////////////////////
 
+    function detectOnPause(pointerTip, pointerSpeed){
+	if(pointerTip == null){
+	    return;
+	}
+	var EPSILON_0 = 150;  //Epsilon_0 < Epsilon
+	if(magnitude3(pointerSpeed) < 30 && 
+	   distance2(pointerTip, lastBeatLoc) < EPSILON_0){
+	    MIN_TEMPO = 0;
+	    detectOnPauseCallback(true);
+	}
+	else{
+	    MIN_TEMPO = parseInt(BASE_TEMPO/3);
+	    detectOnPauseCallback(false);
+	}
+    }
+
+    function nextState(pos, state){
+        stateTable = [[3,0,0],
+                      [3,3,1],
+                      [1,3,1],
+                      [1,3,3],
+                      [2,2,3]];
+        var row = 0;
+        if(-50 > pos){row = 4}
+        else if(0 > pos && pos >= -50){row = 3}
+        else if(20 > pos && pos >= 0){row = 2}
+        else if(70 > pos && pos >= 20){row = 1}
+        else if(pos >= 70){row = 0}
+        else {throw new Error('Invalid Position in next state');}
+        console.log(row, state);
+        return stateTable[row][state];
+    }
     // Calls back true if an instrumental group is selected.
     // Calls back false othe group is deselected otherwise.
     function detectSelect(hands, frame) {
@@ -107,10 +142,14 @@ var dataProcessing = (function() {
                     relevantFinger = pointer.id;
                 }
             }
+
             if(frame.pointable(relevantFinger).valid != false){
-                var distance = frame.pointable(relevantFinger).stabilizedTipPosition;   
-                if(distance[2] < -50 && !currentlyTouched) {detectSelectCallback(true); currentlyTouched = true;}
-                if(distance[2] > 0 && currentlyTouched) {detectSelectCallback(false); currentlyTouched = false;}
+                var distance = frame.pointable(relevantFinger).stabilizedTipPosition[2];   
+                var temp = nextState(distance, curState);
+                if(temp != 3){
+                    curState = temp;
+                    detectSelectCallback(curState);
+                }
             }
         }
     }
@@ -273,7 +312,7 @@ var dataProcessing = (function() {
     // There are still bugs, I want to push out something so you guys
     // can use it first.
     function beatReceived(pointerTip, pointerSpeed){
-        //REQUIRES tempo != nan.
+        //@REQUIRES tempo != NaN.
         var V_SMOOTHNESS = 35;
         var V_BEGIN = 50;
         var TIMEDELAY = (3/5)*(60000/tempo);      //Calibrate based on tempo
@@ -281,8 +320,6 @@ var dataProcessing = (function() {
         var returnVar = false;    // this variable is dumb.
         var COSTHRES = -0.25
 
-
-        
         if(pointerTip != null){
             var oldvs = oldData.slice(-V_BEGIN, (-V_BEGIN + V_SMOOTHNESS)).
                 filter(function(x){return x.pointerSpeed != null;}).
@@ -401,6 +438,7 @@ var dataProcessing = (function() {
             detectVolumeChange(handLoc, palmVelocity, time);
             detectTempoChange(pointerTip, pointerSpeed, time);
             detectOrchLoc(handLoc, fingerDir);
+	    detectOnPause(pointerTip, pointerSpeed);
         },
         onDetectSelectChange: function(callback) {
             detectSelectCallback = callback;
@@ -422,6 +460,10 @@ var dataProcessing = (function() {
         },
         onStart: function(callback) {
             onStartCallback = callback;
+        },
+        onDetectOnPause: function(callback) {
+            detectOnPauseCallback = callback;
         }
+
     }
 })();
