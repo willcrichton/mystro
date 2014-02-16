@@ -25,24 +25,12 @@ var dataProcessing = (function() {
     var BASE_TEMPO = C.BASE_TEMPO;
     var tempo = BASE_TEMPO;
 
-    detectSelectCallback = function() {
-        //console.log('No select callback registered.');
-    }
-    detectVolumeChangeCallback = function() {
-        //console.log('No volume callback registered.');
-    }
-    detectTempoChangeCallback = function() {
-        //console.log('No tempo callback registered.');
-    }
-    detectOrchLocCallback = function() {
-        console.log('No location callback registered.');
-    }
-    onBeatCallback = function() {
-        console.log('No beat callback registered.');
-    }
-    onStartCallback = function() {
-        console.log('No start callback registered.');
-    }
+    detectSelectCallback = function() { }
+    detectVolumeChangeCallback = function() { }
+    detectTempoChangeCallback = function() { }
+    detectOrchLocCallback = function() { }
+    onBeatCallback = function() { }
+    onStartCallback = function() { }
 
 
     // Gets the magnitude of a number vector with 0..2 indices
@@ -257,11 +245,11 @@ var dataProcessing = (function() {
     // them, returns a smaller array.
     function lastnBeats(n) {
         var arr = [];
-        var numBeats = 0;
+        var beatsSeen = 0;
         for(var i = oldData.length - 1; i >= 0; i--) {
             if(oldData[i].isBeat) {
                 arr.unshift(oldData[i]);
-                if(numBeats === n) {
+                if(beatsSeen === n) {
                     return arr;
                 }
             }
@@ -293,14 +281,17 @@ var dataProcessing = (function() {
         var shouldBeBeat = time - lastBeatTime > BEAT_RANGE_HIGH*(60*1000)/tempo;
         
         if(isBeat || shouldBeBeat) {
-            oldBeats = lastnBeats(lastnBeats(TEMPO_SMOOTHING+1));
-                if(oldBeats.length > TEMPO_SMOOTHING) {
-                    var newTempo = TEMPO_SMOOTHING/(time - (oldBeats[0].time))*(60*1000);
-                    /*_.reduce(lastnBeats(TEMPO_SMOOTHING), function(a, b) {
-                        return a.b;
-                    }, 0)/TEMPO_SMOOTHING;
-                    */
-                    //console.log("time" + time);
+            var oldBeats = lastnBeats(lastnBeats(TEMPO_SMOOTHING+1));
+            if(oldBeats.length > TEMPO_SMOOTHING) {
+                var newTempo = TEMPO_SMOOTHING/(time - (oldBeats[0].time))*(60*1000);
+                for(var i = 0; i < TEMPO_SMOOTHING + 1; i++) {
+                    //console.log(oldBeats[i].time); TODO
+                }
+                /*_.reduce(lastnBeats(TEMPO_SMOOTHING), function(a, b) {
+                    return a.b;
+                }, 0)/TEMPO_SMOOTHING;
+                */
+                //console.log("time" + time);
                 //console.log("oooo"   + oldBeats[0].time);
                 //console.log("tempo just set to " + newTempo);
                 tempo = clamp(newTempo, MIN_TEMPO, MAX_TEMPO);
