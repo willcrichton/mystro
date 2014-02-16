@@ -8,7 +8,7 @@ var dataProcessing = (function() {
     var oldData = [];
 
     var lastAverageV = [0,0,0];
-    var currentlyTouched = 0;
+    var curState = 0;
     var lastBeatTime = 0;
     var lastBeatLoc = [0, 0, 0]; //Chance of error is small
     var lastBeatDist = 1;
@@ -92,6 +92,22 @@ var dataProcessing = (function() {
 
     ////////////////////////// Functions  ///////////////////////////
 
+    function nextState(pos, state){
+        stateTable = [[3,0,0],
+                      [3,3,1],
+                      [1,3,1],
+                      [1,3,3],
+                      [2,2,3]];
+        var row = 0;
+        if(-50 > pos){row = 4}
+        else if(0 > pos && pos >= -50){row = 3}
+        else if(20 > pos && pos >= 0){row = 2}
+        else if(70 > pos && pos >= 20){row = 1}
+        else if(pos >= 70){row = 0}
+        else {throw new Error('Invalid Position in next state');}
+        return stateTable[row][state];
+    }
+
     // Calls back true if an instrumental group is selected.
     // Calls back false othe group is deselected otherwise.
     function detectSelect(hands, frame) {
@@ -106,10 +122,11 @@ var dataProcessing = (function() {
                     relevantFinger = pointer.id;
                 }
             }
+
             if(frame.pointable(relevantFinger).valid != false){
                 var distance = frame.pointable(relevantFinger).stabilizedTipPosition;   
-                if(distance[2] < -50 && !currentlyTouched) {detectSelectCallback(true); currentlyTouched = true;}
-                if(distance[2] > 0 && currentlyTouched) {detectSelectCallback(false); currentlyTouched = false;}
+                curState = nextState(distance, curState);
+                if(curState != 3){detectSelectCallback(curState);}
             }
         }
     }
@@ -240,8 +257,6 @@ var dataProcessing = (function() {
         var returnVar = false;    // this variable is dumb.
         var COSTHRES = -0.25
 
-
-        
         if(pointerTip != null){
             var oldvs = oldData.slice(-V_BEGIN, (-V_BEGIN + V_SMOOTHNESS)).
                 filter(function(x){return x.pointerSpeed != null;}).
