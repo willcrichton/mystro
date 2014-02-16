@@ -1,3 +1,7 @@
+
+
+
+
 // hue integration
 var Hue;
 $(function() {
@@ -45,11 +49,11 @@ $(function() {
                     } else { 
                         response = 'Error ' + http.status;
                     }
-                    console.log(response);
+                    //console.log(response);
                 }
             }
             http.send(JSON.stringify(nextData));
-            console.log('sent http request');
+            //console.log('sent http request');
         }
         nextURL = null;
         nextData = null;
@@ -138,15 +142,10 @@ $(function() {
                 var fingerDir = null;
             }
 
-            dataProcessing.pushData(hands, pointerTip, pointerSpeed, handLoc, palmVelocity, fingerDir);
+            dataProcessing.pushData(frame, hands, pointerTip, pointerSpeed, handLoc, palmVelocity, fingerDir);
         }
     });
     ctl.connect();
-    
-    // Score scrolling
-    /*var counter = 0;
-    counter += 420;
-    $('#score').animate({scrollTop: counter}, 200);*/
 
     var context = new webkitAudioContext();
     
@@ -200,7 +199,7 @@ $(function() {
         if (counter != sounds.length) return;
 
         console.log('Buffer loaded...');
-        $('#play').fadeIn();
+        $('#main').fadeIn(3000);
 
         buffers.forEach(function(buffer, i) {
             var source = context.createBufferSource();
@@ -215,35 +214,22 @@ $(function() {
             gains[i] = gain;
         });
     }
+    
+    var applause;
+    load('applause.mp3', function(path, buffer) {
+        applause = context.createBufferSource();
+        applause.buffer = buffer;
+        applause.connect(context.destination);
+    });
+
+    load('warmup.mp3', function(path, buffer) {
+        var source = context.createBufferSource();
+        source.buffer = buffer;
+        source.connect(context.destination);
+        source.start(0);
+    });
 
     sounds.forEach(function(path) { load(path, onLoad); });
-
-    $('.instrument').click(function() {
-        var node = gains[$(this).index()];
-        node.gain.value = 1.0;
-
-        $(this).addClass('active');
-    });
-
-    $('#play').click(function() {
-        $('#play').fadeOut(function() {
-            $('#main').fadeIn(function() {
-                sources.forEach(function(source) {
-                    source.start(0);
-                });
-            });
-        });
-    });
-
-    /*    $(document).click(function() {
-        if ($('#main').is(':visible')) {
-            var inc = 0.5;
-            pitchShift *= 0.3;
-            sources.forEach(function(source) {
-                source.playbackRate.value += inc;
-            });
-        }
-    });*/
 
     function clamp(x, a, b) {
         return Math.max(Math.min(x, b), a);
@@ -254,6 +240,19 @@ $(function() {
         $('.instrument:nth-child(' + (i+1) + ')').css('background-position', 'left ' + fill + '%');
     }
 
+    function onBeat() {
+        var $particle, x, y;
+        for (var i = 0; i < 10; i++) {
+            $particle = $('<div class="particle"></div>');
+            x = Math.random() - 0.5;
+            y = Math.random() - 0.5;
+            $('#dot').append($particle);
+            $particle.animate({top: (x * 40), left: (y * 40), opacity: 0}, 400, function() {
+                $(this).remove();
+            });
+        }
+    }
+
     dataProcessing.onDetectVolumeChange(function(delta) {
         if (isNaN(delta)) return;
 
@@ -261,7 +260,7 @@ $(function() {
         if (selected === -1) {
             gains.forEach(function(node, i) {
                 node.gain.value = clamp(node.gain.value + delta * 3, 0, 3.0);
-                maxVol = (node.gain.value > maxVol) ? node.gain.value : maxVol;
+                maxVol = Math.max(node.gain.value, maxVol)
                 setVolumeFill(i);
             });
         } else {
@@ -270,11 +269,23 @@ $(function() {
             maxVol = (gains[selected].gain.value > maxVol) ? node.gain.value : maxVol;
             setVolumeFill(selected);
         }
+        //console.log('Max volume: ' + maxVol);
         Hue.setColor(maxVol/3);
     });
 
+    var started = false;
     dataProcessing.onDetectOrchLoc(function(pair) {
         var x = pair[0], y = pair[1];
+
+        if (!started) {
+            started = true;
+            applause.start(0);
+            setTimeout(function() {
+                sources.forEach(function(source) {
+                    source.start(0);
+                });
+            }, 3000);
+        }
 
         if (selected !== -1) return;
 
@@ -302,7 +313,7 @@ $(function() {
         });
 
         avg /= frames.length;
-        avg /= 92;
+        avg /= C.BASE_TEMPO;
 
         sources.forEach(function(source) {
             var oldRate = source.playbackRate.value;
@@ -330,6 +341,4 @@ $(function() {
             selected = -1;
         }
     });
-
-
 });

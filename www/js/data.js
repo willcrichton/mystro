@@ -1,3 +1,11 @@
+var C = {BASE_TEMPO: 108};
+
+function clamp(x, a, b) {
+    return Math.max(Math.min(x, b), a);
+}
+
+
+
 var dataProcessing = (function() {
     var oldData = [
         // key: value pairs where key is the time in ms
@@ -12,8 +20,10 @@ var dataProcessing = (function() {
     var currentlyTouched = 0;
     var lastBeatTime = 0;
     var lastBeatLoc = [0, 0, 0]; //Chance of error is small
-    var lastBeatDist = 0;
-    var BASE_TEMPO = 108
+    var lastBeatDist = 1;
+    var relevantFinger = null;
+    var BASE_TEMPO = C.BASE_TEMPO;
+    var tempo = BASE_TEMPO;
 
     detectSelectCallback = function() {
         //console.log('No select callback registered.');
@@ -35,8 +45,8 @@ var dataProcessing = (function() {
     }
 
     function averageVector3(vecs){
-	    if(vecs.length === 0)
-	        return [0, 0, 0];
+        if(vecs.length === 0)
+            return [0, 0, 0];
         sum = $V([0,0,0]);
         for (var i = vecs.length - 1; i >= 0; i--) {
             sum = sum.add($V(vecs[i]));
@@ -44,15 +54,15 @@ var dataProcessing = (function() {
         return sum.multiply(1.0/vecs.length).elements;
     }
 
-    function frontMostPointable (pointables){
-        var zs = pointables.map(function(x){x[2]});
+    var frontMostPointable = function(pointables){
+        var zs = pointables.map(function(x){return x.stabilizedTipPosition[2]});
         var index = _.indexOf(zs, _.min(zs));
         return pointables[index];
 
     }
 
-    function leftMostHand (hands){
-        var zs = hands.map(function(x){x[0]});
+    var leftMostHand = function(hands){
+        var zs = hands.map(function(x){return x.palmPosition[0]});
         var index = _.indexOf(zs, _.min(zs));
         return hands[index];
 
@@ -64,10 +74,13 @@ var dataProcessing = (function() {
     function historicalAcceleration(n){
         TIMEOUT = 1000;
         if(oldData.length >= n){
-	    var lastn1 = oldData.slice(-n);
-            var lastn = oldData.slice(-n).filter(
-		function(y){return y.pointerSpeed != null && (((new Date().getTime()) - y.time) < 1000)}
-	         ).map(function(x){return x.pointerSpeed;});
+            var lastn1 = oldData.slice(-n);
+            var lastn = oldData.slice(-n).filter(function(y) {
+                return y.pointerSpeed != null && (((new Date().getTime()) - y.time) < 1000)
+            }).map(function(x) {
+                return x.pointerSpeed;
+            });
+
             var accels = [];
             for (var i = lastn.length - 1; i >= 1; i--) {
                 accels.push($V(lastn[i]).subtract($V(lastn[i-1])).elements);
@@ -81,33 +94,34 @@ var dataProcessing = (function() {
     }
 
     function relativeAcceleration(pointerSpeed, n){
-        if(oldData.length >= n){
+        if(oldData.length >= n) {
             var lastn = oldData.slice(-n).filter(function(y){return y.pointerSpeed != null && (((new Date().getTime()) - y.time) < 1000)}).map(function(x){return x.pointerSpeed});
             var avgOldSpeed = averageVector3(lastn);
             return $V(pointerSpeed).subtract($V(avgOldSpeed)).elements;
-        }
-        else{
-            return 0;            
+        } else {
+            return 0;
         }
     }
 
     // Calls back true if an instrumental group is selected.
     // Calls back false othe group is deselected otherwise.
-    function detectSelect(handLoc, hands) {
-        if(handLoc !== null && hands[0].pointables.length > 0) {
-            var distance = hands[0].pointables[0].stabilizedTipPosition;
-            //console.log(distance[2]);
-
-            if(distance[2] < -100 && currentlyTouched == 0){
-                currentlyTouched = 1;
-                detectSelectCallback(true);
+    function detectSelect(hands, frame) {
+        if(frame.pointables.length > 0)
+        {
+            var prerelevant = frame.pointable(relevantFinger).valid;
+            if(relevantFinger == null || frame.pointable(relevantFinger).valid == false){
+                var hands = frame.hands.filter(function(elem){return ((elem.tools.length == 0) && (elem.pointables.length > 0))});
+                if(hands.length > 0){
+                    hand  = leftMostHand(hands);
+                    pointer = frontMostPointable(hand.pointables);
+                    relevantFinger = pointer.id;
+                }
             }
-            else if(distance[2] > 0 && currentlyTouched == 1)
-            {
-                currentlyTouched = 0;
-                detectSelectCallback(false);
+            if(frame.pointable(relevantFinger).valid != false){
+                var distance = frame.pointable(relevantFinger).stabilizedTipPosition;   
+                if(distance[2] < -50 && !currentlyTouched) {detectSelectCallback(true); currentlyTouched = true;}
+                if(distance[2] > 0 && currentlyTouched) {detectSelectCallback(false); currentlyTouched = false;}
             }
-
         }
     }
 
@@ -124,7 +138,7 @@ var dataProcessing = (function() {
     // element of oldData is actually the current data, so ignore that one.
     // Also checks that the data is 'recent enough'.
     function lastVolData(time) {
-        var IGNORE_IF_OLDER_THAN_MILLIS = 1000;
+        var IGNORE_IF_OLDER_THAN_MILLIS = 100;
         if(oldData.length > 1) {
             for(var i = oldData.length-2; i >= 0; i--) {
                 var elt = oldData[i];
@@ -145,7 +159,7 @@ var dataProcessing = (function() {
     function detectVolumeChange(handLoc, palmVelocity, time) {
         if(palmVelocity === undefined) {
             throw new Error('palmVelocity is undefined!');
-        }
+        }  
         if(handLoc === undefined) {
             throw new Error('handLoc is undefined!');
         }
@@ -212,34 +226,72 @@ var dataProcessing = (function() {
     }
     // NOT ACTUALLY A DOT PRODUCT. EDIT: dot product is now a real dot product
     function dotP(a, b){
-	    var A = 1
-	    var B = 1
-	    return A*a[0]*b[0] + B*a[1]*b[1] + a[2]+b[2];
+        var A = 1
+        var B = 1
+        return A*a[0]*b[0] + B*a[1]*b[1] + a[2]+b[2];
     }
     
     function cosine(a,b){
-	    if(a === [0,0,0] || b === [0,0,0])
-	        return 0;
-	    return dotP(a,b)/(magnitude3(a)*magnitude3(b))
+        if(a === [0,0,0] || b === [0,0,0])
+            return 0;
+        return dotP(a,b)/(magnitude3(a)*magnitude3(b))
     }
 
     function distance2(pt, ps){
-	return magnitude3([pt[0]-ps[0], pt[1]-ps[1], 0]);
+        return magnitude3([pt[0]-ps[0], pt[1]-ps[1], 0]);
     }
 
     // Calls the callback function if current state is a beat.
-     var NUM_FRAMES = 25;
+    var NUM_FRAMES = 25;
     var TIME_DELAY = 350;
     var BEAT_THRESHOLD = -7000;
     var lastSpeeds = [];
 
+    // Gets an array of the last n frames which had beats. If there aren't n of
+    // them, returns a smaller array.
+    function lastnBeats(n) {
+        var arr = [];
+        var numBeats = 0;
+        for(var i = oldData.length - 1; i >= 0; i--) {
+            if(oldData[i].isBeat) {
+                arr.unshift(oldData[i]);
+                if(numBeats === n) {
+                    return arr;
+                }
+            }
+        }
+        return arr;
+    }
 
-    // To ensure backwards compatibilty. This needs to change
-
-    function detectTempoChange(pointerTip, pointerSpeed){
-	if(beatReceived(pointerTip, pointerSpeed)){
-	    detectTempoChangeCallback(true);		
-	}
+    /* To ensure backwards compatibilty. This needs to change */
+    var MAX_TEMPO = 2*BASE_TEMPO;
+    var MIN_TEMPO = parseInt(BASE_TEMPO/3);
+    var TEMPO_SMOOTHING = 4;
+    // var BEAT_RANGE_LOW = .8; //Patrick takes care of this
+    var BEAT_RANGE_HIGH = 1.2;
+    function detectTempoChange(pointerTip, pointerSpeed, time){
+        var isBeat = beatReceived(pointerTip, pointerSpeed);
+        
+        // oldData is nonempty since the current frame is in it.
+        oldData[oldData.length - 1].isBeat = isBeat;
+        
+        var shouldBeBeat = time - lastBeatTime > BEAT_RANGE_HIGH*(60*1000)/tempo;
+        
+        if(isBeat || shouldBeBeat) {
+			oldBeats = lastnBeats(lastnBeats(TEMPO_SMOOTHING+1));
+	                if(oldBeats.length > 4) {
+					var newTempo = TEMPO_SMOOTHING/(time - (oldBeats[0].time))*(60*1000);
+					/*_.reduce(lastnBeats(TEMPO_SMOOTHING), function(a, b) {
+						return a.b;
+					}, 0)/TEMPO_SMOOTHING;
+					*/
+		            //console.log("time" + time);
+			    //console.log("oooo"   + oldBeats[0].time);
+			    //console.log("tempo just set to " + newTempo);
+			    tempo = clamp(newTempo, MIN_TEMPO, MAX_TEMPO);
+			    detectTempoChangeCallback(tempo);
+			}
+        }
     }
 
     // Preliminary detectTempoChange function.
@@ -248,12 +300,16 @@ var dataProcessing = (function() {
     // There are still bugs, I want to push out something so you guys
     // can use it first.
     function beatReceived(pointerTip, pointerSpeed){
+	//REQUIRES tempo != nan.
         var V_SMOOTHNESS = 35;
 	var V_BEGIN = 50;
-	var TIMEDELAY = (3/5)*(60000/BASE_TEMPO);      //Calibrate based on tempo
+	var TIMEDELAY = (3/5)*(60000/tempo);      //Calibrate based on tempo
 	var EPSILON = (3*lastBeatDist)/5;        //Calibrate based on intensity (if exists)
 	var returnVar = false;    // this variable is dumb.
 	var COSTHRES = -0.25
+
+
+	
         if(pointerTip != null){
             var oldvs = oldData.slice(-V_BEGIN, (-V_BEGIN + V_SMOOTHNESS)).
 		        filter(function(x){return x.pointerSpeed != null;}).
@@ -263,6 +319,10 @@ var dataProcessing = (function() {
 	    }
 	    var avgVel = averageVector3(oldvs);
 	    var beatSign = cosine([avgVel[0], avgVel[1], 0], [pointerSpeed[0], pointerSpeed[1], 0]);
+	    if(beatSign < COSTHRES){
+		//console.log(beatSign, magnitude3(pointerSpeed), (new Date().getTime() - lastBeatTime), distance2(pointerTip, lastBeatLoc) );
+		//console.log("For the above, time delay is" + TIMEDELAY + " and ep is" + EPSILON);
+	    }
 	    if( (beatSign < COSTHRES || magnitude3(pointerSpeed) < 30 ) 
 		&& (new Date().getTime() - lastBeatTime)> TIMEDELAY &&
 	        distance2(pointerTip, lastBeatLoc) > EPSILON ){
@@ -270,6 +330,7 @@ var dataProcessing = (function() {
 		lastBeatTime = (new Date().getTime());
 		lastBeatDist = distance2(pointerTip, lastBeatLoc);
 		console.log(lastBeatDist);
+		console.log("Tempo is " + tempo);
 		lastBeatLoc = pointerTip;
 		returnVar = true;
             }
@@ -312,7 +373,7 @@ var dataProcessing = (function() {
         // Ignore out of place places, since the front end will 
         // display exactly what we want (unchanged).
         if(handLoc === null || (handLoc[0] < LEFTEDGE || handLoc[0] > RIGHTEDGE)
-	       || (handLoc[1] < BOTTOMEDGE || handLoc[1] > TOPEDGE)){
+           || (handLoc[1] < BOTTOMEDGE || handLoc[1] > TOPEDGE)){
             return;
         }
         var handX = handLoc[0];
@@ -341,8 +402,8 @@ var dataProcessing = (function() {
         
         finalNormedLoc = _.map(finalNormedLoc, 
                                function (v){ if(v < 0) {return 0;} 
-							                 else if(v > 1) {return 0.99;}
-							                 else return v;});
+                                             else if(v > 1) {return 0.99;}
+                                             else return v;});
         detectOrchLocCallback(finalNormedLoc);
     }
 
@@ -354,7 +415,7 @@ var dataProcessing = (function() {
         // palmVelocity : array 0..2 (normalized)
         // fingerDir : array 0..2 (normalized)
         // For each input, no data if null
-        pushData: function(hands, pointerTip, pointerSpeed, handLoc, palmVelocity, fingerDir) {
+        pushData: function(frame, hands, pointerTip, pointerSpeed, handLoc, palmVelocity, fingerDir) {
             if(handLoc === undefined) {
                 throw new Error('undefined handLoc passed to pushData.');
             }
@@ -372,10 +433,10 @@ var dataProcessing = (function() {
                 fingerDir: fingerDir
             });
 
-            detectSelect(handLoc, hands);
+            detectSelect(hands, frame);
 
             detectVolumeChange(handLoc, palmVelocity, time);
-            detectTempoChange(pointerTip, pointerSpeed);
+            detectTempoChange(pointerTip, pointerSpeed, time);
             detectOrchLoc(handLoc, fingerDir);
         },
         onDetectSelectChange: function(callback) {
