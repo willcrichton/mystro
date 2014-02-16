@@ -195,7 +195,7 @@ $(function() {
         if (counter != sounds.length) return;
 
         console.log('Buffer loaded...');
-        $('#play').fadeIn();
+        $('#main').fadeIn(3000);
 
         buffers.forEach(function(buffer, i) {
             var source = context.createBufferSource();
@@ -210,18 +210,22 @@ $(function() {
             gains[i] = gain;
         });
     }
+    
+    var applause;
+    load('applause.mp3', function(path, buffer) {
+        applause = context.createBufferSource();
+        applause.buffer = buffer;
+        applause.connect(context.destination);
+    });
+
+    load('warmup.mp3', function(path, buffer) {
+        var source = context.createBufferSource();
+        source.buffer = buffer;
+        source.connect(context.destination);
+        source.start(0);
+    });
 
     sounds.forEach(function(path) { load(path, onLoad); });
-
-    $('#play').click(function() {
-        $('#play').fadeOut(function() {
-            $('#main').fadeIn(function() {
-                sources.forEach(function(source) {
-                    source.start(0);
-                });
-            });
-        });
-    });
 
     function clamp(x, a, b) {
         return Math.max(Math.min(x, b), a);
@@ -265,8 +269,19 @@ $(function() {
         Hue.setColor(maxVol/3);
     });
 
+    var started = false;
     dataProcessing.onDetectOrchLoc(function(pair) {
         var x = pair[0], y = pair[1];
+
+        if (!started) {
+            started = true;
+            applause.start(0);
+            setTimeout(function() {
+                sources.forEach(function(source) {
+                    source.start(0);
+                });
+            }, 3000);
+        }
 
         if (selected !== -1) return;
 
