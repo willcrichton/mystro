@@ -164,7 +164,7 @@ $(function() {
         return x;
     };
 
-    var sounds = ['zelda1.wav', 'zelda2.wav', 'zelda3.wav', 'zelda4.wav'];
+    var sounds = ['beethoven.mp3']; //['zelda1.wav', 'zelda2.wav', 'zelda3.wav', 'zelda4.wav'];
     var buffers = [];
     var sources = [];
     var gains = [];
@@ -255,7 +255,7 @@ $(function() {
     var started = false;
     var mainVisible = false;
     dataProcessing.onDetectVolumeChange(function(delta) {
-        if (isNaN(delta)) return;
+        if (isNaN(delta) || !gains.length) return;
 
         if (!started && mainVisible && delta > 0.01) {
             console.log('Starting...');
@@ -266,7 +266,7 @@ $(function() {
         }
 
         var maxVol = 0;
-        if (selected === -1) {
+        if (selected === -1 || selected >= gains.length) {
             gains.forEach(function(node, i) {
                 node.gain.value = clamp(node.gain.value + delta * 3, 0, 3.0);
                 maxVol = Math.max(node.gain.value, maxVol)
@@ -298,7 +298,8 @@ $(function() {
     var time = new Date().getTime();
     var frames = [];
     var NUM_FRAMES = 3;
-    
+
+    var currentTempo = 1;
     dataProcessing.onDetectTempoChange(function(tempo) {
 
         /*var cur = new Date().getTime();
@@ -324,11 +325,16 @@ $(function() {
             }
         });*/
 
-        sources.forEach(function(source) {
-            source.playbackRate.value = tempo / C.BASE_TEMPO;
-            pitchShift = 0.33 * (2 - tempo / C.BASE_TEMPO);
-        });
+        currentTempo = tempo / C.BASE_TEMPO;
     });
+
+    setInterval(function() {
+        sources.forEach(function(source) {
+            var newVal = source.playbackRate.value * 0.9 + currentTempo * 0.1;
+            source.playbackRate.value = newVal;
+            pitchShift = 0.33 * (2 - newVal);
+        });
+    }, 100);
 
     var selected = -1;
     dataProcessing.onDetectSelectChange(function(down) {
