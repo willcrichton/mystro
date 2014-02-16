@@ -142,11 +142,6 @@ $(function() {
         }
     });
     ctl.connect();
-    
-    // Score scrolling
-    /*var counter = 0;
-    counter += 420;
-    $('#score').animate({scrollTop: counter}, 200);*/
 
     var context = new webkitAudioContext();
     
@@ -218,13 +213,6 @@ $(function() {
 
     sounds.forEach(function(path) { load(path, onLoad); });
 
-    $('.instrument').click(function() {
-        var node = gains[$(this).index()];
-        node.gain.value = 1.0;
-
-        $(this).addClass('active');
-    });
-
     $('#play').click(function() {
         $('#play').fadeOut(function() {
             $('#main').fadeIn(function() {
@@ -234,16 +222,6 @@ $(function() {
             });
         });
     });
-
-    /*    $(document).click(function() {
-        if ($('#main').is(':visible')) {
-            var inc = 0.5;
-            pitchShift *= 0.3;
-            sources.forEach(function(source) {
-                source.playbackRate.value += inc;
-            });
-        }
-    });*/
 
     function clamp(x, a, b) {
         return Math.max(Math.min(x, b), a);
