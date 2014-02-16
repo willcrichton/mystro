@@ -168,7 +168,7 @@ $(function() {
         return x;
     };
 
-    var sounds = ['beethoven.mp3']; //['zelda1.wav', 'zelda2.wav', 'zelda3.wav', 'zelda4.wav'];
+    var sounds = ['medley1.wav', 'medley2.wav', 'medley3.wav', 'medley4.wav']; //['beethoven.mp3']; //['zelda1.wav', 'zelda2.wav', 'zelda3.wav', 'zelda4.wav'];
     var buffers = [];
     var sources = [];
     var gains = [];
@@ -360,9 +360,9 @@ $(function() {
     dataProcessing.onBeat(function() {
         beatCount++;
 
-        if (beatCount % 12 === 0) {
+        if (beatCount % (sounds[0] == 'beethoven.mp3' ? 15: 12) === 0) {
             $('#score').animate({
-                scrollTop: '+=400',
+                scrollTop: '+=400'
             }, 200);
         }
 
@@ -380,4 +380,8 @@ $(function() {
             logoVisible = false;
         }
     });
+
+    if (sounds[0] == 'beethoven.mp3' ) {
+        $('#score').animate({scrollTop: 40});
+    }
 });
