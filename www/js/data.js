@@ -8,31 +8,26 @@ var dataProcessing = (function() {
         //     ...
         //  }
     ]
+
+    ////////////////////////// Global Variables ///////////////////////////
     var lastAverageVelocity = 0;
     var currentlyTouched = 0;
     var lastBeatTime = 0;
     var relevantFinger = null;
     var lastBeatLoc = [-1000,-1000,1000]; //intialized outside of range.
 
-    detectSelectCallback = function() {
-        //console.log('No select callback registered.');
-    }
-    detectVolumeChangeCallback = function() {
-        //console.log('No volume callback registered.');
-    }
-    detectTempoChangeCallback = function() {
-        //console.log('No tempo callback registered.');
-    }
-    detectOrchLocCallback = function() {
-        console.log('No location callback registered.');
-    }
+    ////////////////////////// Default Callbacks //////////////////////////
+    detectSelectCallback = function() {}
+    detectVolumeChangeCallback = function() {}
+    detectTempoChangeCallback = function() {}
+    detectOrchLocCallback = function() {}
 
-
-    // Gets the magnitude of a number vector with 0..2 indices
+    ////////////////////////// Vector Functions  ///////////////////////////
     function magnitude3(vec) {
-        return Math.sqrt(vec[0]*vec[0] + vec[1]*vec[1] + vec[2]*vec[2]);
+        return Leap.vec3.len(vec);
     }
 
+    
     function averageVector3(vecs){
         if(vecs.length === 0)
             return [0, 0, 0];
