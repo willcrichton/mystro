@@ -195,7 +195,7 @@ $(function() {
         if (counter != sounds.length) return;
 
         console.log('Buffer loaded...');
-        $('#play').fadeIn();
+        $('#logo').fadeIn(3000);
 
         buffers.forEach(function(buffer, i) {
             var source = context.createBufferSource();
@@ -204,24 +204,28 @@ $(function() {
             var gain = context.createGainNode();
             gain.connect(processor);
             source.connect(gain);
-            gain.gain.value = 1.0;
+            gain.gain.value = 0.0;
 
             sources[i] = source;
             gains[i] = gain;
         });
     }
+    
+    var applause;
+    load('applause.mp3', function(path, buffer) {
+        applause = context.createBufferSource();
+        applause.buffer = buffer;
+        applause.connect(context.destination);
+    });
+
+    load('warmup.mp3', function(path, buffer) {
+        var source = context.createBufferSource();
+        source.buffer = buffer;
+        source.connect(context.destination);
+        source.start(0);
+    });
 
     sounds.forEach(function(path) { load(path, onLoad); });
-
-    $('#play').click(function() {
-        $('#play').fadeOut(function() {
-            $('#main').fadeIn(function() {
-                sources.forEach(function(source) {
-                    source.start(0);
-                });
-            });
-        });
-    });
 
     function clamp(x, a, b) {
         return Math.max(Math.min(x, b), a);
@@ -245,8 +249,17 @@ $(function() {
         }
     }
 
+    var started = false;
+    var mainVisible = false;
     dataProcessing.onDetectVolumeChange(function(delta) {
         if (isNaN(delta)) return;
+
+        if (!started && mainVisible && delta > 0.1) {
+            sources.forEach(function(source) {
+                source.start(0);
+            });
+            started = true;
+        }
 
         var maxVol = 0;
         if (selected === -1) {
@@ -281,7 +294,9 @@ $(function() {
     var time = new Date().getTime();
     var frames = [];
     var NUM_FRAMES = 3;
+    
     dataProcessing.onDetectTempoChange(function() {
+
         var cur = new Date().getTime();
 
         if (frames.length == NUM_FRAMES) frames.pop();
@@ -294,13 +309,12 @@ $(function() {
         });
 
         avg /= frames.length;
-        avg /= 92;
+        avg /= C.BASE_TEMPO;
 
         sources.forEach(function(source) {
             var oldRate = source.playbackRate.value;
 
             if (Math.abs(oldRate - avg) > 0.3) {
-                console.log(avg);
                 source.playbackRate.value = avg;
                 pitchShift = 0.33 * (2 - oldRate);
             }
@@ -321,5 +335,13 @@ $(function() {
             $('.instrument').removeClass('active');
             selected = -1;
         }
+    });
+
+    dataProcessing.onStart(function() {
+        $('#logo').fadeOut(function() {
+            $('#main').fadeIn(3000);
+            applause.start(0);
+            mainVisible = true;
+        });
     });
 });

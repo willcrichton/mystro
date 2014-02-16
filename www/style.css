@@ -6,22 +6,11 @@ body {
     font-weight: 300;
 }
 
-#play {
-    display: none;
+#logo {
     position: absolute;
     top: 0; left: 0; bottom: 0; right: 0;
     margin: auto;
-    width: 200px;
-    height: 100px;
-    padding: 10px;
-    text-align: center;
-    font-size: 48px;
-    background: #c71621;
-    color: white;
-    text-shadow: 0 0 1px black;
-    border: none; outline: none;
-    border-radius: 10px;
-    cursor: pointer;
+    display: none;
 }
 
 #main {
@@ -85,7 +74,7 @@ body {
 
     background: linear-gradient(to bottom, white 50%, gray 50%);
     background-size: 100% 200%;
-    background-position: left 33%;
+    background-position: left 0%;
     /*transition: 0.5s all ease;*/
 }
 
