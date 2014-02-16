@@ -284,8 +284,9 @@ var dataProcessing = (function() {
             var oldBeats = lastnBeats(lastnBeats(TEMPO_SMOOTHING+1));
             if(oldBeats.length > TEMPO_SMOOTHING) {
                 var newTempo = TEMPO_SMOOTHING/(time - (oldBeats[0].time))*(60*1000);
+                console.log('Old beats: ');
                 for(var i = 0; i < TEMPO_SMOOTHING + 1; i++) {
-                    //console.log(oldBeats[i].time); TODO
+                    console.log(oldBeats[i].time);
                 }
                 /*_.reduce(lastnBeats(TEMPO_SMOOTHING), function(a, b) {
                     return a.b;
