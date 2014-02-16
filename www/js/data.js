@@ -325,8 +325,8 @@ var dataProcessing = (function() {
         //@REQUIRES tempo != NaN.
         var V_SMOOTHNESS = 35;
         var V_BEGIN = 50;
-        var TIMEDELAY = (3/5)*(60000/tempo);      //Calibrate based on tempo
-        var EPSILON = (3*lastBeatDist)/5;        //Calibrate based on intensity (if exists)
+        var TIMEDELAY = 330;      //Calibrate based on tempo
+        var EPSILON =175;        //Calibrate based on intensity (if exists)
         var returnVar = false;    // this variable is dumb.
         var COSTHRES = -0.25
 
