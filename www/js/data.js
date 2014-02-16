@@ -1,21 +1,11 @@
 var C = {BASE_TEMPO: 108};
 
-function clamp(x, a, b) {
-    return Math.max(Math.min(x, b), a);
-}
-
-
-
 var dataProcessing = (function() {
-    var oldData = [
-        // key: value pairs where key is the time in ms
-        // 1234: {
-        //     pointerTip: ...,
-        //     pointerSpeed: ..., 
-        //     handLoc: ..., 
-        //     ...
-        //  }
-    ]
+
+    ////////////////////////// Global Values  ///////////////////////////
+    // key: value pairs where key is the time in ms
+    //eg: [time: 1234, pointerTip: ..., pointerSpeed: ..., ....]
+    var oldData = [];
 
     var lastAverageV = [0,0,0];
     var currentlyTouched = 0;
@@ -26,6 +16,24 @@ var dataProcessing = (function() {
     var BASE_TEMPO = C.BASE_TEMPO;
     var tempo = BASE_TEMPO;
 
+    var MIN_PALM_HEIGHT = 100;
+    var MAX_PALM_HEIGHT = 500;
+
+    var NUM_FRAMES = 25;
+    var TIME_DELAY = 350;
+    var BEAT_THRESHOLD = -7000;
+    var lastSpeeds = [];
+
+    var MAX_TEMPO = 2*BASE_TEMPO;
+    var MIN_TEMPO = parseInt(BASE_TEMPO/3);
+    var TEMPO_SMOOTHING = 4;
+    var IGNORE_FIRST_N_BEATS = 2; //Used to be 3
+    // var BEAT_RANGE_LOW = .8; //Patrick takes care of this
+    var BEAT_RANGE_HIGH = 1.2;
+    var numBeats = 0;
+
+    var started = false;
+    ////////////////////////// Default Callbacks  ///////////////////////////
     detectSelectCallback = function() { }
     detectVolumeChangeCallback = function() { }
     detectTempoChangeCallback = function() { }
@@ -34,11 +42,8 @@ var dataProcessing = (function() {
     onStartCallback = function() { }
 
 
-    ////////////////////////// Vector Functions  ///////////////////////////
-    function magnitude3(vec) {
-        return Leap.vec3.len(vec);
-    }
-
+    ////////////////////////// Vector & helper Functions  ////////////////////
+    function magnitude3(vec) {return Leap.vec3.len(vec);}
     
     function averageVector3(vecs){
         if(vecs.length === 0)
@@ -48,6 +53,23 @@ var dataProcessing = (function() {
             sum = sum.add($V(vecs[i]));
         };
         return sum.multiply(1.0/vecs.length).elements;
+    }
+
+    //Technically a variable dot product
+    function dotP(a, b){
+        var A = 1
+        var B = 1
+        return A*a[0]*b[0] + B*a[1]*b[1] + a[2]+b[2];
+    }
+    
+    function cosine(a,b){
+        if(a === [0,0,0] || b === [0,0,0])
+            return 0;
+        return dotP(a,b)/(magnitude3(a)*magnitude3(b))
+    }
+
+    function distance2(pt, ps){
+        return magnitude3([pt[0]-ps[0], pt[1]-ps[1], 0]);
     }
 
     var frontMostPointable = function(pointables){
@@ -64,40 +86,11 @@ var dataProcessing = (function() {
 
     }
 
+    function clamp(x, a, b) {
+        return Math.max(Math.min(x, b), a);
+    }   
 
-    // Use OLD DATA to caluate an average acceleration over the previous
-    // n iterations.
-    function historicalAcceleration(n){
-        TIMEOUT = 1000;
-        if(oldData.length >= n){
-            var lastn1 = oldData.slice(-n);
-            var lastn = oldData.slice(-n).filter(function(y) {
-                return y.pointerSpeed != null && (((new Date().getTime()) - y.time) < 1000)
-            }).map(function(x) {
-                return x.pointerSpeed;
-            });
-
-            var accels = [];
-            for (var i = lastn.length - 1; i >= 1; i--) {
-                accels.push($V(lastn[i]).subtract($V(lastn[i-1])).elements);
-            };
-            return averageVector3(accels);
-        }
-        else{
-            return 0;            
-        }
-        return 0;
-    }
-
-    function relativeAcceleration(pointerSpeed, n){
-        if(oldData.length >= n) {
-            var lastn = oldData.slice(-n).filter(function(y){return y.pointerSpeed != null && (((new Date().getTime()) - y.time) < 1000)}).map(function(x){return x.pointerSpeed});
-            var avgOldSpeed = averageVector3(lastn);
-            return $V(pointerSpeed).subtract($V(avgOldSpeed)).elements;
-        } else {
-            return 0;
-        }
-    }
+    ////////////////////////// Functions  ///////////////////////////
 
     // Calls back true if an instrumental group is selected.
     // Calls back false othe group is deselected otherwise.
@@ -121,8 +114,6 @@ var dataProcessing = (function() {
         }
     }
 
-    var MIN_PALM_HEIGHT = 100;
-    var MAX_PALM_HEIGHT = 500;
     function normedVol(absoluteVolDelta) {
         return absoluteVolDelta/(MAX_PALM_HEIGHT - MIN_PALM_HEIGHT);
     }
@@ -160,39 +151,7 @@ var dataProcessing = (function() {
             throw new Error('handLoc is undefined!');
         }
 
-        /*
-          if(handLoc[1] < MIN_PALM_HEIGHT || handLoc[1] > MAX_PALM_HEIGHT) {
-          // Out of range. Ignore.
-          return;
-          }
-        */
-
-        if(palmVelocity === null || handLoc === null) {
-            /*var prevGoodData = lastVolData(time);
-              if(prevGoodData === null) {
-              //console.log('No recent left hand. (null)');
-              return;
-              }
-
-              var prevTime = (_.last(oldData, 2))[0];
-              if(prevTime === undefined || prevTime === null) {
-              throw new Error('sadface. need to sleep on this.');
-              }
-              if(prevTime.time > time) {
-              throw new Error('I really hope this never happens. Did it?');
-              }
-
-              // Linearly interpolate to guess new volume.
-              console.log('Time: ' + prevTime.time);
-              console.log('Velocity: ' + prevGoodData.palmVelocity);
-              var result = (time - prevTime.time)*prevGoodData.palmVelocity;
-
-              if(_.isNaN(result)) console.log('Found result = NaN');
-              var tmp = normedVol(result);
-              if(_.isNaN(tmp)) console.log('Found normedVol = NaN');
-              detectVolumeChangeCallback(normedVol(result));
-            */
-        } else {
+        if(!(palmVelocity === null || handLoc === null)){
             if(handLoc[1] < MIN_PALM_HEIGHT || handLoc[1] > MAX_PALM_HEIGHT) {
                 // Out of range. Ignore.
                 return;
@@ -202,7 +161,6 @@ var dataProcessing = (function() {
             var thisHeight = handLoc[1];
             var lastHeightElt = lastVolData(time);
             if(lastHeightElt === null) {
-                //console.log('No recent left hand. (no lastHeightElt)');
                 return;
             }
             var lastHeight = lastHeightElt.handLoc[1];
@@ -213,35 +171,10 @@ var dataProcessing = (function() {
             }
 
             if(result !== null) {
-                //if(_.isNaN(result)) console.log('Found result = NaN');
-                //var tmp = normedVol(result);
-                //if(_.isNaN(tmp)) console.log('Found normedVol = NaN');
                 detectVolumeChangeCallback(normedVol(result));
             }
         }
     }
-    // NOT ACTUALLY A DOT PRODUCT. EDIT: dot product is now a real dot product
-    function dotP(a, b){
-        var A = 1
-        var B = 1
-        return A*a[0]*b[0] + B*a[1]*b[1] + a[2]+b[2];
-    }
-    
-    function cosine(a,b){
-        if(a === [0,0,0] || b === [0,0,0])
-            return 0;
-        return dotP(a,b)/(magnitude3(a)*magnitude3(b))
-    }
-
-    function distance2(pt, ps){
-        return magnitude3([pt[0]-ps[0], pt[1]-ps[1], 0]);
-    }
-
-    // Calls the callback function if current state is a beat.
-    var NUM_FRAMES = 25;
-    var TIME_DELAY = 350;
-    var BEAT_THRESHOLD = -7000;
-    var lastSpeeds = [];
 
     // Gets an array of the last n frames which had beats. If there aren't n of
     // them, returns a smaller array.
@@ -262,28 +195,16 @@ var dataProcessing = (function() {
         return arr;
     }
 
-    /* To ensure backwards compatibilty. This needs to change */
-    var MAX_TEMPO = 2*BASE_TEMPO;
-    var MIN_TEMPO = parseInt(BASE_TEMPO/3);
-    var TEMPO_SMOOTHING = 4;
-    var IGNORE_FIRST_N_BEATS = 3;
-    // var BEAT_RANGE_LOW = .8; //Patrick takes care of this
-    var BEAT_RANGE_HIGH = 1.2;
-    var numBeats = 0;
-
     function detectTempoChange(pointerTip, pointerSpeed, time) {
         var isBeat = beatReceived(pointerTip, pointerSpeed);
         if(isBeat) {
             numBeats++;
         }
         oldData[oldData.length - 1].isBeat = isBeat;
-        //console.log('numBeats = ' + numBeats);
+
         if(numBeats <= TEMPO_SMOOTHING + IGNORE_FIRST_N_BEATS) {
             return;
         }
-        
-        // oldData is nonempty since the current frame is in it.
-        //console.log('Index ' + (oldData.length - 1) + ' isBeat= ' + isBeat);
         
         var shouldBeBeat = time - lastBeatTime > BEAT_RANGE_HIGH*(60*1000)/tempo;
         
@@ -297,102 +218,13 @@ var dataProcessing = (function() {
             }
             if(oldBeats.length > TEMPO_SMOOTHING) {
                 var newTempo = (60*1000)*TEMPO_SMOOTHING/(time - (oldBeats[0].time));
-                //console.log('time =  ' + time);
-                //console.log('oldBeats[0].time = ' + oldBeats[0].time);
-                //console.log('time - ....time =  ' + (time - oldBeats[0].time));
-                for(var i = 0; i < TEMPO_SMOOTHING + 1; i++) {
-                    //console.log(oldBeats[i].time);
-                }
-                /*_.reduce(lastnBeats(TEMPO_SMOOTHING), function(a, b) {
-                    return a.b;
-                }, 0)/TEMPO_SMOOTHING;
-                */
-                //console.log("time" + time);
-                //console.log("oooo"   + oldBeats[0].time);
-                //console.log("tempo just set to " + newTempo);
                 tempo = clamp(newTempo, MIN_TEMPO, MAX_TEMPO);
                 detectTempoChangeCallback(tempo);
             } else {
-                //console.log('Error: oldBeats.length = ' + oldBeats.length);
-                //console.log('Error: numBeats = ' + numBeats);
                 throw new Error('lastnBeats is malfunctioning');
             }
         }
     }
-    /*
-    var speeds = [];
-    var NUM_SPEEDS = 1000;
-
-    function detectTempoChange(pointerTip, pointerSpeed, time){
-        
-        if (pointerTip === null) return;
-
-        //console.log(pointerTip, pointerSpeed);
-
-        var speed = Math.sqrt(Math.pow(pointerSpeed[0], 2) + Math.pow(pointerSpeed[1], 2));
-        speeds.push(speed);
-        if (speeds.length >= NUM_SPEEDS) {
-            speeds.shift();
-        }
-        
-        var avg = 0;
-        speeds.forEach(function(s) { avg += s; });
-        avg /= speeds.length;
-
-        var newAvg = 0;
-        var counter = 0;
-        speeds.forEach(function(s) {
-            if (Math.abs(newAvg - s) < 300) {
-                newAvg += s;
-                counter++;
-            }
-        });
-
-        avg = newAvg / counter;
-
-        //console.log(avg);
-        if (avg < 700) {
-            detectTempoChangeCallback(0);
-        } else if (avg < 1200) {
-            detectTempoChangeCallback(1);
-        } else {
-            detectTempoChangeCallback(2);
-        }
-        */
-        
-
-        /*var isBeat = beatReceived(pointerTip, pointerSpeed);
-          if(isBeat) {
-          numBeats++;
-          }
-          if(numBeats <= TEMPO_SMOOTHING + IGNORE_FIRST_N_BEATS) {
-          return;
-          }
-          
-          // oldData is nonempty since the current frame is in it.
-          oldData[oldData.length - 1].isBeat = isBeat;
-          
-          var shouldBeBeat = time - lastBeatTime > BEAT_RANGE_HIGH*(60*1000)/tempo;
-          
-          if(isBeat || shouldBeBeat) {
-          var oldBeats = lastnBeats(lastnBeats(TEMPO_SMOOTHING+1));
-          if(oldBeats.length > TEMPO_SMOOTHING) {
-          var newTempo = TEMPO_SMOOTHING/(time - (oldBeats[0].time))*(60*1000);
-          console.log('Old beats: ');
-          for(var i = 0; i < TEMPO_SMOOTHING + 1; i++) {
-          console.log(oldBeats[i].time);
-          }
-          //_.reduce(lastnBeats(TEMPO_SMOOTHING), function(a, b) {
-          //    return a.b;
-          //}, 0)/TEMPO_SMOOTHING;
-          //console.log("time" + time);
-          //console.log("oooo"   + oldBeats[0].time);
-          //console.log("tempo just set to " + newTempo);
-          tempo = clamp(newTempo, MIN_TEMPO, MAX_TEMPO);
-          detectTempoChangeCallback(tempo);
-          }
-          }*/
-    //}
 
     // For the lights!
     DIST_LOWER_BOUND = 50;
@@ -434,8 +266,7 @@ var dataProcessing = (function() {
         //REQUIRES tempo != nan.
         var V_SMOOTHNESS = 35;
         var V_BEGIN = 50;
-       // var TIMEDELAY = (3/5)*(60000/tempo);      //Calibrate based on tempo
-        var TIMEDELAY = (300);
+        var TIMEDELAY = (3/5)*(60000/tempo);      //Calibrate based on tempo
         var EPSILON = (3*lastBeatDist)/5;        //Calibrate based on intensity (if exists)
         var returnVar = false;    // this variable is dumb.
         var COSTHRES = -0.25
@@ -451,17 +282,12 @@ var dataProcessing = (function() {
             }
             var avgVel = averageVector3(oldvs);
             var beatSign = cosine([avgVel[0], avgVel[1], 0], [pointerSpeed[0], pointerSpeed[1], 0]);
-            if(beatSign < COSTHRES){
-                //console.log(beatSign, magnitude3(pointerSpeed), (new Date().getTime() - lastBeatTime), distance2(pointerTip, lastBeatLoc) );
-                //console.log("For the above, time delay is" + TIMEDELAY + " and ep is" + EPSILON);
-            }
+
             if( (beatSign < COSTHRES || magnitude3(pointerSpeed) < 30 ) 
                 && (new Date().getTime() - lastBeatTime)> TIMEDELAY &&
                 distance2(pointerTip, lastBeatLoc) > EPSILON ){
-                console.log(beatSign, distance2(pointerTip, lastBeatLoc), pointerTip, magnitude3(pointerSpeed), new Date().getTime() - lastBeatTime);
                 lastBeatTime = (new Date().getTime());
                 lastBeatDist = distance2(pointerTip, lastBeatLoc);
-                console.log(lastBeatDist);
                 console.log("Tempo is " + tempo);
                 lastBeatLoc = pointerTip;
                 returnVar = true;
@@ -472,13 +298,6 @@ var dataProcessing = (function() {
         }
         return returnVar;
     }
-
-    // Helper for detectOrchLoc (Not used as of saturday morning)
-    // function detectRecentHandLoc(){
-    //     var LEFTEDGE = -300; 
-    //     var TOPEDGE = 400;
-    //     return [LEFTEDGE, TOPEDGE];
-    // }
 
     // Points to a region in the orchestra.    
     // Does simple physics vector addition with some bounds.
@@ -540,7 +359,6 @@ var dataProcessing = (function() {
         detectOrchLocCallback(finalNormedLoc);
     }
 
-    var started = false;
     return {
         // Called when the leapmotion gets new data.
         // pointerTip : array 0..2
@@ -570,7 +388,6 @@ var dataProcessing = (function() {
             });
 
             detectSelect(hands, frame);
-
             detectVolumeChange(handLoc, palmVelocity, time);
             detectTempoChange(pointerTip, pointerSpeed, time);
             detectOrchLoc(handLoc, fingerDir);
