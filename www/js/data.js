@@ -394,6 +394,37 @@ var dataProcessing = (function() {
           }*/
     //}
 
+    // For the lights!
+    DIST_LOWER_BOUND = 50;
+    DIST_UPPER_BOUND = 450;
+    var INTENSITY_SMOOTHING = TEMPO_SMOOTHING;
+    function detectIntensityChange(time) {
+        oldData.beatDist = lastBeatDist;
+        if(numBeats <= INTENSITY_SMOOTHING + IGNORE_FIRST_N_BEATS) {
+            return;
+        }
+        
+        // oldData is nonempty since the current frame is in it.
+        //var shouldBeBeat = time - lastBeatTime > BEAT_RANGE_HIGH*(60*1000)/tempo;
+        
+        var oldBeats = lastnBeats(INTENSITY_SMOOTHING+1);
+        if(oldBeats.length > INTENSITY_SMOOTHING) {
+            var mapped = _.map(oldBeats, function(beat) {
+                return beat.beatDist;
+            });
+            var avgDist = (_.reduce(mapped, function(a, b) { 
+                return a+b;
+            }, 0))/(INTENSITY_SMOOTHING+1);
+
+            var clamped = clamp(avgDist, DIST_LOWER_BOUND, DIST_UPPER_BOUND);
+            var normalized = (clamped - DIST_LOWER_BOUND)/DIST_UPPER_BOUND;
+
+            detectIntensityChangeCallback(normalized);
+        } else {
+            throw new Error('lastnBeats is malfunctioning');
+        }
+    }
+
     // Preliminary detectTempoChange function.
     // Currently this OVERCOUNTS the beats.
     // IMPORTANT: RETURNS TRUE IF A BEAT IS RECEIVED
@@ -552,6 +583,9 @@ var dataProcessing = (function() {
         },
         onDetectTempoChange: function(callback) {
             detectTempoChangeCallback = callback;
+        },
+        onDetectIntensityChange: function(callback) {
+            onDetectIntesityCallback = callback;
         },
         onDetectOrchLoc: function(callback) {
             detectOrchLocCallback = callback;
