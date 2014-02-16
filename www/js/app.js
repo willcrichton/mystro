@@ -188,6 +188,7 @@ $(function() {
     };
     processor.connect(context.destination);
 
+    var logoVisible = false;
     function onLoad(path, buffer) {
         buffers[sounds.indexOf(path)] = buffer;
 
@@ -195,7 +196,9 @@ $(function() {
         if (counter != sounds.length) return;
 
         console.log('Buffer loaded...');
-        $('#logo').fadeIn(3000);
+        $('#logo').fadeIn(3000, function() {
+            logoVisible = true;
+        });
 
         buffers.forEach(function(buffer, i) {
             var source = context.createBufferSource();
@@ -254,7 +257,9 @@ $(function() {
     dataProcessing.onDetectVolumeChange(function(delta) {
         if (isNaN(delta)) return;
 
-        if (!started && mainVisible && delta > 0.1) {
+        console.log(started, mainVisible, delta);
+        if (!started && mainVisible && delta > 0.01) {
+            console.log('Starting...');
             sources.forEach(function(source) {
                 source.start(0);
             });
@@ -295,9 +300,10 @@ $(function() {
     var frames = [];
     var NUM_FRAMES = 3;
     
-    dataProcessing.onDetectTempoChange(function() {
+    var rates = [0.75, 1.0, 1.25];
+    dataProcessing.onDetectTempoChange(function(index) {
 
-        var cur = new Date().getTime();
+        /*var cur = new Date().getTime();
 
         if (frames.length == NUM_FRAMES) frames.pop();
         frames.unshift(1 / (cur - time) * 1000 * 60);
@@ -318,6 +324,13 @@ $(function() {
                 source.playbackRate.value = avg;
                 pitchShift = 0.33 * (2 - oldRate);
             }
+        });*/
+
+        //console.log(index);
+
+        sources.forEach(function(source) {
+            source.playbackRate.value = rates[index];
+            pitchShift = 0.33 * (2 - rates[index]);
         });
     });
 
@@ -338,10 +351,14 @@ $(function() {
     });
 
     dataProcessing.onStart(function() {
-        $('#logo').fadeOut(function() {
-            $('#main').fadeIn(3000);
-            applause.start(0);
-            mainVisible = true;
-        });
+        if (logoVisible) {
+            $('#logo').fadeOut(function() {
+                $('#main').fadeIn(3000);
+                applause.start(0);
+                mainVisible = true;
+            });
+
+            logoVisible = false;
+        }
     });
 });
