@@ -268,39 +268,77 @@ var dataProcessing = (function() {
     var BEAT_RANGE_HIGH = 1.2;
     var numBeats = 0;
 
+    var speeds = [];
+    var NUM_SPEEDS = 1000;
+
     function detectTempoChange(pointerTip, pointerSpeed, time){
-        var isBeat = beatReceived(pointerTip, pointerSpeed);
-        if(isBeat) {
-            numBeats++;
+        
+        if (pointerTip === null) return;
+
+        //console.log(pointerTip, pointerSpeed);
+
+        var speed = Math.sqrt(Math.pow(pointerSpeed[0], 2) + Math.pow(pointerSpeed[1], 2));
+        speeds.push(speed);
+        if (speeds.length >= NUM_SPEEDS) {
+            speeds.shift();
         }
-        if(numBeats <= TEMPO_SMOOTHING + IGNORE_FIRST_N_BEATS) {
-            return;
-        }
         
-        // oldData is nonempty since the current frame is in it.
-        oldData[oldData.length - 1].isBeat = isBeat;
-        
-        var shouldBeBeat = time - lastBeatTime > BEAT_RANGE_HIGH*(60*1000)/tempo;
-        
-        if(isBeat || shouldBeBeat) {
-            var oldBeats = lastnBeats(lastnBeats(TEMPO_SMOOTHING+1));
-            if(oldBeats.length > TEMPO_SMOOTHING) {
-                var newTempo = TEMPO_SMOOTHING/(time - (oldBeats[0].time))*(60*1000);
-                console.log('Old beats: ');
-                for(var i = 0; i < TEMPO_SMOOTHING + 1; i++) {
-                    console.log(oldBeats[i].time);
-                }
-                /*_.reduce(lastnBeats(TEMPO_SMOOTHING), function(a, b) {
-                    return a.b;
-                }, 0)/TEMPO_SMOOTHING;
-                */
-                //console.log("time" + time);
-                //console.log("oooo"   + oldBeats[0].time);
-                //console.log("tempo just set to " + newTempo);
-                tempo = clamp(newTempo, MIN_TEMPO, MAX_TEMPO);
-                detectTempoChangeCallback(tempo);
+        var avg = 0;
+        speeds.forEach(function(s) { avg += s; });
+        avg /= speeds.length;
+
+        var newAvg = 0;
+        var counter = 0;
+        speeds.forEach(function(s) {
+            if (Math.abs(newAvg - s) < 300) {
+                newAvg += s;
+                counter++;
             }
+        });
+
+        avg = newAvg / counter;
+
+        //console.log(avg);
+        if (avg < 700) {
+            detectTempoChangeCallback(0);
+        } else if (avg < 1200) {
+            detectTempoChangeCallback(1);
+        } else {
+            detectTempoChangeCallback(2);
         }
+        
+
+        /*var isBeat = beatReceived(pointerTip, pointerSpeed);
+          if(isBeat) {
+          numBeats++;
+          }
+          if(numBeats <= TEMPO_SMOOTHING + IGNORE_FIRST_N_BEATS) {
+          return;
+          }
+          
+          // oldData is nonempty since the current frame is in it.
+          oldData[oldData.length - 1].isBeat = isBeat;
+          
+          var shouldBeBeat = time - lastBeatTime > BEAT_RANGE_HIGH*(60*1000)/tempo;
+          
+          if(isBeat || shouldBeBeat) {
+          var oldBeats = lastnBeats(lastnBeats(TEMPO_SMOOTHING+1));
+          if(oldBeats.length > TEMPO_SMOOTHING) {
+          var newTempo = TEMPO_SMOOTHING/(time - (oldBeats[0].time))*(60*1000);
+          console.log('Old beats: ');
+          for(var i = 0; i < TEMPO_SMOOTHING + 1; i++) {
+          console.log(oldBeats[i].time);
+          }
+          //_.reduce(lastnBeats(TEMPO_SMOOTHING), function(a, b) {
+          //    return a.b;
+          //}, 0)/TEMPO_SMOOTHING;
+          //console.log("time" + time);
+          //console.log("oooo"   + oldBeats[0].time);
+          //console.log("tempo just set to " + newTempo);
+          tempo = clamp(newTempo, MIN_TEMPO, MAX_TEMPO);
+          detectTempoChangeCallback(tempo);
+          }
+          }*/
     }
 
     // Preliminary detectTempoChange function.
@@ -309,46 +347,46 @@ var dataProcessing = (function() {
     // There are still bugs, I want to push out something so you guys
     // can use it first.
     function beatReceived(pointerTip, pointerSpeed){
-    //REQUIRES tempo != nan.
+        //REQUIRES tempo != nan.
         var V_SMOOTHNESS = 35;
-    var V_BEGIN = 50;
-    var TIMEDELAY = (3/5)*(60000/tempo);      //Calibrate based on tempo
-    var EPSILON = (3*lastBeatDist)/5;        //Calibrate based on intensity (if exists)
-    var returnVar = false;    // this variable is dumb.
-    var COSTHRES = -0.25
+        var V_BEGIN = 50;
+        var TIMEDELAY = (3/5)*(60000/tempo);      //Calibrate based on tempo
+        var EPSILON = (3*lastBeatDist)/5;        //Calibrate based on intensity (if exists)
+        var returnVar = false;    // this variable is dumb.
+        var COSTHRES = -0.25
 
 
-    
+        
         if(pointerTip != null){
             var oldvs = oldData.slice(-V_BEGIN, (-V_BEGIN + V_SMOOTHNESS)).
                 filter(function(x){return x.pointerSpeed != null;}).
                 map(function(y){return y.pointerSpeed});
             if(oldvs.length > 5){
-        oldvs.push(lastAverageV);
-        }
-        var avgVel = averageVector3(oldvs);
-        var beatSign = cosine([avgVel[0], avgVel[1], 0], [pointerSpeed[0], pointerSpeed[1], 0]);
-        if(beatSign < COSTHRES){
-        //console.log(beatSign, magnitude3(pointerSpeed), (new Date().getTime() - lastBeatTime), distance2(pointerTip, lastBeatLoc) );
-        //console.log("For the above, time delay is" + TIMEDELAY + " and ep is" + EPSILON);
-        }
-        if( (beatSign < COSTHRES || magnitude3(pointerSpeed) < 30 ) 
-        && (new Date().getTime() - lastBeatTime)> TIMEDELAY &&
-            distance2(pointerTip, lastBeatLoc) > EPSILON ){
-        console.log(beatSign, distance2(pointerTip, lastBeatLoc), pointerTip, magnitude3(pointerSpeed), new Date().getTime() - lastBeatTime);
-        lastBeatTime = (new Date().getTime());
-        lastBeatDist = distance2(pointerTip, lastBeatLoc);
-        console.log(lastBeatDist);
-        console.log("Tempo is " + tempo);
-        lastBeatLoc = pointerTip;
-        returnVar = true;
-        onBeatCallback();
+                oldvs.push(lastAverageV);
             }
-        lastAverageV = pointerSpeed;
+            var avgVel = averageVector3(oldvs);
+            var beatSign = cosine([avgVel[0], avgVel[1], 0], [pointerSpeed[0], pointerSpeed[1], 0]);
+            if(beatSign < COSTHRES){
+                //console.log(beatSign, magnitude3(pointerSpeed), (new Date().getTime() - lastBeatTime), distance2(pointerTip, lastBeatLoc) );
+                //console.log("For the above, time delay is" + TIMEDELAY + " and ep is" + EPSILON);
+            }
+            if( (beatSign < COSTHRES || magnitude3(pointerSpeed) < 30 ) 
+                && (new Date().getTime() - lastBeatTime)> TIMEDELAY &&
+                distance2(pointerTip, lastBeatLoc) > EPSILON ){
+                console.log(beatSign, distance2(pointerTip, lastBeatLoc), pointerTip, magnitude3(pointerSpeed), new Date().getTime() - lastBeatTime);
+                lastBeatTime = (new Date().getTime());
+                lastBeatDist = distance2(pointerTip, lastBeatLoc);
+                console.log(lastBeatDist);
+                console.log("Tempo is " + tempo);
+                lastBeatLoc = pointerTip;
+                returnVar = true;
+                onBeatCallback();
+            }
+            lastAverageV = pointerSpeed;
 
         }
         return returnVar;
-       }
+    }
 
     // Helper for detectOrchLoc (Not used as of saturday morning)
     // function detectRecentHandLoc(){
@@ -434,10 +472,7 @@ var dataProcessing = (function() {
                 throw new Error('undefined palmVelocity passed to pushData.');
             }
 
-            if (!started) {
-                onStartCallback();
-                started = true;
-            }
+            onStartCallback();
 
             time = (new Date()).getTime();
             oldData.push({
