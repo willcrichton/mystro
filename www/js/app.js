@@ -99,13 +99,13 @@ $(function() {
             });
         },
         animate: function() {
-            var context = this;
+            var obj = this;
             window.setTimeout(function() {
-                context.setWhite();
+                obj.setWhite();
                 window.setTimeout(function() {
-                    context.setColor(1);
+                    obj.setColor(1);
                 }, 585);
-            }, 520);
+            }, 500);
         },
             
         // Initialize with our favorite settings
@@ -129,7 +129,9 @@ $(function() {
         Hue.setColor(normedIntensity);
     });
 
-    dataProcessing.onWhiten(Hue.setWhite);
+    dataProcessing.onWhiten(function() {
+        Hue.animate();
+    });
 
     var ctl = new Leap.Controller({enableGestures: true});
 
