@@ -263,9 +263,11 @@ var dataProcessing = (function() {
         var shouldBeBeat = time - lastBeatTime > BEAT_RANGE_HIGH*(60*1000)/tempo;
         
         if(isBeat || shouldBeBeat) {
-            var newTempo = _.reduce(lastnBeats(TEMPO_SMOOTHING), function(a, b) {
-                return a+b;
-            }, 0);
+            var newTempo = TEMPO_SMOOTHING/(time - (lastnBeats(n))[0].time)*(60*1000);
+            /*_.reduce(lastnBeats(TEMPO_SMOOTHING), function(a, b) {
+                return a.b;
+            }, 0)/TEMPO_SMOOTHING;
+            */
             tempo = clamp(newTempo, MIN_TEMPO, MAX_TEMPO);
                     
             detectTempoChangeCallback(tempo);
