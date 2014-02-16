@@ -191,7 +191,9 @@ $(function() {
         return x;
     };
 
-    var sounds = ['medley1.wav', 'medley2.wav', 'medley3.wav', 'medley4.wav']; //['beethoven.mp3']; //['zelda1.wav', 'zelda2.wav', 'zelda3.wav', 'zelda4.wav'];
+    //var sounds = ['medley1.mp3', 'medley2.mp3', 'medley3.mp3', 'medley4.mp3'];
+    var sounds = ['beethoven.mp3'];
+    var IS_BEETHOVEN = sounds[0] == 'beethoven.mp3';
     var buffers = [];
     var sources = [];
     var gains = [];
@@ -351,7 +353,9 @@ $(function() {
 
     var currentTempo = 1;
     dataProcessing.onDetectTempoChange(function(tempo) {
-        currentTempo = tempo / C.BASE_TEMPO;
+        if (sounds[0] === 'beethoven.mp3') {
+            currentTempo = tempo / C.BASE_TEMPO;
+        }
     });
 
     setInterval(function() {
@@ -385,7 +389,7 @@ $(function() {
     dataProcessing.onBeat(function() {
         beatCount++;
 
-        if (beatCount % (sounds[0] == 'beethoven.mp3' ? 15: 12) === 0) {
+        if (beatCount % (IS_BEETHOVEN ? 15: 12) === 0) {
             $('#score').animate({
                 scrollTop: '+=400'
             }, 200);
@@ -424,7 +428,14 @@ $(function() {
         }
     });
 
-    if (sounds[0] == 'beethoven.mp3' ) {
+    if (IS_BEETHOVEN) {
         $('#score').animate({scrollTop: 40});
+        $('.instrument:not(:first-child)').remove();
+        $('.instrument').css({
+            float: 'none',
+            margin: '0 auto'
+        });
+
+        $('#score img').attr('src', 'score2.png');
     }
 });
