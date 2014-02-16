@@ -250,11 +250,12 @@ var dataProcessing = (function() {
         var beatsSeen = 0;
         for(var i = oldData.length - 1; i >= 0; i--) {
             if(oldData[i].isBeat) {
+                beatsSeen++;
                 arr.unshift(oldData[i]);
                 if(beatsSeen === n) {
                     return arr;
                 }
-            }
+            } 
         }
         return arr;
     }
@@ -268,7 +269,7 @@ var dataProcessing = (function() {
     var BEAT_RANGE_HIGH = 1.2;
     var numBeats = 0;
 
-    function detectTempoChange(pointerTip, pointerSpeed, time){
+    function detectTempoChange(pointerTip, pointerSpeed, time) {
         var isBeat = beatReceived(pointerTip, pointerSpeed);
         if(isBeat) {
             numBeats++;
@@ -279,16 +280,23 @@ var dataProcessing = (function() {
         
         // oldData is nonempty since the current frame is in it.
         oldData[oldData.length - 1].isBeat = isBeat;
+        //console.log('Index ' + (oldData.length - 1) + ' isBeat= ' + isBeat);
         
         var shouldBeBeat = time - lastBeatTime > BEAT_RANGE_HIGH*(60*1000)/tempo;
         
         if(isBeat || shouldBeBeat) {
-            var oldBeats = lastnBeats(lastnBeats(TEMPO_SMOOTHING+1));
+            var oldBeats;
+            if(shouldBeBeat) {
+                oldBeats = lastnBeats(lastnBeats(TEMPO_SMOOTHING));
+                oldBeats.push(oldData[oldData.length - 1]);
+            } else {
+                oldBeats = lastnBeats(lastnBeats(TEMPO_SMOOTHING+1));
+            }
             if(oldBeats.length > TEMPO_SMOOTHING) {
                 var newTempo = TEMPO_SMOOTHING/(time - (oldBeats[0].time))*(60*1000);
-                console.log('Old beats: ');
+                //console.log('Old beats: ');
                 for(var i = 0; i < TEMPO_SMOOTHING + 1; i++) {
-                    console.log(oldBeats[i].time);
+                    //console.log(oldBeats[i].time);
                 }
                 /*_.reduce(lastnBeats(TEMPO_SMOOTHING), function(a, b) {
                     return a.b;
