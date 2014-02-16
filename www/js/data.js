@@ -8,7 +8,7 @@ var dataProcessing = (function() {
     var oldData = [];
 
     var lastAverageV = [0,0,0];
-    var currentlyTouched = 0;
+    var curState = 0;
     var lastBeatTime = 0;
     var lastBeatLoc = [0, 0, 0]; //Chance of error is small
     var lastBeatDist = 1;
@@ -95,7 +95,6 @@ var dataProcessing = (function() {
 
     ////////////////////////// Functions  ///////////////////////////
 
-
     function detectOnPause(pointerTip, pointerSpeed){
 	if(pointerTip == null){
 	    return;
@@ -112,7 +111,22 @@ var dataProcessing = (function() {
 	}
     }
 
-
+    function nextState(pos, state){
+        stateTable = [[3,0,0],
+                      [3,3,1],
+                      [1,3,1],
+                      [1,3,3],
+                      [2,2,3]];
+        var row = 0;
+        if(-50 > pos){row = 4}
+        else if(0 > pos && pos >= -50){row = 3}
+        else if(20 > pos && pos >= 0){row = 2}
+        else if(70 > pos && pos >= 20){row = 1}
+        else if(pos >= 70){row = 0}
+        else {throw new Error('Invalid Position in next state');}
+        console.log(row, state);
+        return stateTable[row][state];
+    }
     // Calls back true if an instrumental group is selected.
     // Calls back false othe group is deselected otherwise.
     function detectSelect(hands, frame) {
@@ -127,10 +141,14 @@ var dataProcessing = (function() {
                     relevantFinger = pointer.id;
                 }
             }
+
             if(frame.pointable(relevantFinger).valid != false){
-                var distance = frame.pointable(relevantFinger).stabilizedTipPosition;   
-                if(distance[2] < -50 && !currentlyTouched) {detectSelectCallback(true); currentlyTouched = true;}
-                if(distance[2] > 0 && currentlyTouched) {detectSelectCallback(false); currentlyTouched = false;}
+                var distance = frame.pointable(relevantFinger).stabilizedTipPosition[2];   
+                var temp = nextState(distance, curState);
+                if(temp != 3){
+                    curState = temp;
+                    detectSelectCallback(curState);
+                }
             }
         }
     }
@@ -247,6 +265,37 @@ var dataProcessing = (function() {
         }
     }
 
+    // For the lights!
+    DIST_LOWER_BOUND = 50;
+    DIST_UPPER_BOUND = 450;
+    var INTENSITY_SMOOTHING = TEMPO_SMOOTHING;
+    function detectIntensityChange(time) {
+        oldData.beatDist = lastBeatDist;
+        if(numBeats <= INTENSITY_SMOOTHING + IGNORE_FIRST_N_BEATS) {
+            return;
+        }
+        
+        // oldData is nonempty since the current frame is in it.
+        //var shouldBeBeat = time - lastBeatTime > BEAT_RANGE_HIGH*(60*1000)/tempo;
+        
+        var oldBeats = lastnBeats(INTENSITY_SMOOTHING+1);
+        if(oldBeats.length > INTENSITY_SMOOTHING) {
+            var mapped = _.map(oldBeats, function(beat) {
+                return beat.beatDist;
+            });
+            var avgDist = (_.reduce(mapped, function(a, b) { 
+                return a+b;
+            }, 0))/(INTENSITY_SMOOTHING+1);
+
+            var clamped = clamp(avgDist, DIST_LOWER_BOUND, DIST_UPPER_BOUND);
+            var normalized = (clamped - DIST_LOWER_BOUND)/DIST_UPPER_BOUND;
+
+            detectIntensityChangeCallback(normalized);
+        } else {
+            throw new Error('lastnBeats is malfunctioning');
+        }
+    }
+
     // Preliminary detectTempoChange function.
     // Currently this OVERCOUNTS the beats.
     // IMPORTANT: RETURNS TRUE IF A BEAT IS RECEIVED
@@ -261,8 +310,6 @@ var dataProcessing = (function() {
         var returnVar = false;    // this variable is dumb.
         var COSTHRES = -0.25
 
-
-        
         if(pointerTip != null){
             var oldvs = oldData.slice(-V_BEGIN, (-V_BEGIN + V_SMOOTHNESS)).
                 filter(function(x){return x.pointerSpeed != null;}).
@@ -391,6 +438,9 @@ var dataProcessing = (function() {
         },
         onDetectTempoChange: function(callback) {
             detectTempoChangeCallback = callback;
+        },
+        onDetectIntensityChange: function(callback) {
+            onDetectIntesityCallback = callback;
         },
         onDetectOrchLoc: function(callback) {
             detectOrchLocCallback = callback;

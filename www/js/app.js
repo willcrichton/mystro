@@ -104,6 +104,11 @@ $(function() {
 
 $(function() {
     Hue.setup();
+
+    dataProcessing.onDetectIntensityChange(function(normedIntensity) {
+        Hue.setColor(normedIntensity);
+    });
+
     var ctl = new Leap.Controller({enableGestures: true});
 
     ctl.on('frame', function(frame){
@@ -164,7 +169,7 @@ $(function() {
         return x;
     };
 
-    var sounds = ['beethoven.mp3']; //['zelda1.wav', 'zelda2.wav', 'zelda3.wav', 'zelda4.wav'];
+    var sounds = ['medley1.wav', 'medley2.wav', 'medley3.wav', 'medley4.wav']; //['beethoven.mp3']; //['zelda1.wav', 'zelda2.wav', 'zelda3.wav', 'zelda4.wav'];
     var buffers = [];
     var sources = [];
     var gains = [];
@@ -255,7 +260,7 @@ $(function() {
     var started = false;
     var mainVisible = false;
     dataProcessing.onDetectVolumeChange(function(delta) {
-        if (isNaN(delta) || !gains.length) return;
+        if (isNaN(delta) || !gains.length || selectState === 0) return;
 
         if (!started && mainVisible && delta > 0.01) {
             console.log('Starting...');
@@ -285,7 +290,7 @@ $(function() {
     dataProcessing.onDetectOrchLoc(function(pair) {
         var x = pair[0], y = pair[1];
 
-        if (selected !== -1) return;
+        if (selected !== -1 || selectState === 0) return;
 
         $('#dot').css('left', x * $('#instruments').width());
 
@@ -301,31 +306,7 @@ $(function() {
 
     var currentTempo = 1;
     dataProcessing.onDetectTempoChange(function(tempo) {
-
-        /*var cur = new Date().getTime();
-
-        if (frames.length == NUM_FRAMES) frames.pop();
-        frames.unshift(1 / (cur - time) * 1000 * 60);
-        time = cur;
-
-        var avg = 0;
-        frames.forEach(function(bpm) {
-            avg += bpm;
-        });
-
-        avg /= frames.length;
-        avg /= C.BASE_TEMPO;
-
-        sources.forEach(function(source) {
-            var oldRate = source.playbackRate.value;
-
-            if (Math.abs(oldRate - avg) > 0.3) {
-                source.playbackRate.value = avg;
-                pitchShift = 0.33 * (2 - oldRate);
-            }
-        });*/
-
-       // currentTempo = tempo / C.BASE_TEMPO;
+        currentTempo = tempo / C.BASE_TEMPO;
     });
 
     setInterval(function() {
@@ -337,8 +318,11 @@ $(function() {
     }, 100);
 
     var selected = -1;
-    dataProcessing.onDetectSelectChange(function(down) {
-        if (down) {
+    var selectState = 0;
+    dataProcessing.onDetectSelectChange(function(state) {
+        selectState = state;
+
+        if (state === 2) {
             var $instrument = $('.instrument.hover');
             if (!$instrument.length) return;
 
@@ -349,16 +333,16 @@ $(function() {
         } else {
             $('.instrument').removeClass('active');
             selected = -1;
-        }
+        } 
     });
 
     var beatCount = 0;
     dataProcessing.onBeat(function() {
         beatCount++;
 
-        if (beatCount % 12 === 0) {
+        if (beatCount % (sounds[0] == 'beethoven.mp3' ? 15: 12) === 0) {
             $('#score').animate({
-                scrollTop: '+=400',
+                scrollTop: '+=400'
             }, 200);
         }
 
@@ -394,4 +378,8 @@ $(function() {
             logoVisible = false;
         }
     });
+
+    if (sounds[0] == 'beethoven.mp3' ) {
+        $('#score').animate({scrollTop: 40});
+    }
 });
