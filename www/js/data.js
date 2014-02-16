@@ -8,10 +8,12 @@ var dataProcessing = (function() {
         //     ...
         //  }
     ]
-    var lastAverageVelocity = 0;
+    var lastAverageV = [0,0,0];
     var currentlyTouched = 0;
     var lastBeatTime = 0;
-    var lastBeatLoc = [-1000,-1000,1000]; //intialized outside of range.
+    var lastBeatLoc = [0, 0, 0]; //Chance of error is small
+    var lastBeatDist = 0;
+    var BASE_TEMPO = 108
 
     detectSelectCallback = function() {
         //console.log('No select callback registered.');
@@ -62,10 +64,10 @@ var dataProcessing = (function() {
     function historicalAcceleration(n){
         TIMEOUT = 1000;
         if(oldData.length >= n){
-	        var lastn1 = oldData.slice(-n);
+	    var lastn1 = oldData.slice(-n);
             var lastn = oldData.slice(-n).filter(
-		        function(y){return y.pointerSpeed != null && (((new Date().getTime()) - y.time) < 1000)}
-	        ).map(function(x){return x.pointerSpeed;});
+		function(y){return y.pointerSpeed != null && (((new Date().getTime()) - y.time) < 1000)}
+	         ).map(function(x){return x.pointerSpeed;});
             var accels = [];
             for (var i = lastn.length - 1; i >= 1; i--) {
                 accels.push($V(lastn[i]).subtract($V(lastn[i-1])).elements);
@@ -94,7 +96,7 @@ var dataProcessing = (function() {
     function detectSelect(handLoc, hands) {
         if(handLoc !== null && hands[0].pointables.length > 0) {
             var distance = hands[0].pointables[0].stabilizedTipPosition;
-            console.log(distance[2]);
+            //console.log(distance[2]);
 
             if(distance[2] < -100 && currentlyTouched == 0){
                 currentlyTouched = 1;
@@ -232,9 +234,9 @@ var dataProcessing = (function() {
     var lastSpeeds = [];
 
 
-    /* To ensure backwards compatibilty. This needs to change */
+    // To ensure backwards compatibilty. This needs to change
+
     function detectTempoChange(pointerTip, pointerSpeed){
-	console.log("delete this line");
 	if(beatReceived(pointerTip, pointerSpeed)){
 	    detectTempoChangeCallback(true);		
 	}
@@ -246,26 +248,33 @@ var dataProcessing = (function() {
     // There are still bugs, I want to push out something so you guys
     // can use it first.
     function beatReceived(pointerTip, pointerSpeed){
-        var V_SMOOTHNESS = 10;
-	var V_BEGIN = 30;
-	var TIMEDELAY = 300;      //Calibrate based on tempo
-	var EPSILON = 175;        //Calibrate based on intensity (if exists)
+        var V_SMOOTHNESS = 35;
+	var V_BEGIN = 50;
+	var TIMEDELAY = (3/5)*(60000/BASE_TEMPO);      //Calibrate based on tempo
+	var EPSILON = (3*lastBeatDist)/5;        //Calibrate based on intensity (if exists)
 	var returnVar = false;    // this variable is dumb.
+	var COSTHRES = -0.25
         if(pointerTip != null){
             var oldvs = oldData.slice(-V_BEGIN, (-V_BEGIN + V_SMOOTHNESS)).
 		        filter(function(x){return x.pointerSpeed != null;}).
 		        map(function(y){return y.pointerSpeed});
-            var avgVel = averageVector3(oldvs);
-            var beatSign = cosine([avgVel[0], avgVel[1], 0], [pointerSpeed[0], pointerSpeed[1], 0]);
-	    if( (beatSign < -0.25 || magnitude3(pointerSpeed) < 30 ) 
+            if(oldvs.length > 5){
+		oldvs.push(lastAverageV);
+	    }
+	    var avgVel = averageVector3(oldvs);
+	    var beatSign = cosine([avgVel[0], avgVel[1], 0], [pointerSpeed[0], pointerSpeed[1], 0]);
+	    if( (beatSign < COSTHRES || magnitude3(pointerSpeed) < 30 ) 
 		&& (new Date().getTime() - lastBeatTime)> TIMEDELAY &&
 	        distance2(pointerTip, lastBeatLoc) > EPSILON ){
-		console.log(beatSign, distance2(pointerTip, lastBeatLoc), pointerTip, magnitude3(pointerSpeed));
+		console.log(beatSign, distance2(pointerTip, lastBeatLoc), pointerTip, magnitude3(pointerSpeed), new Date().getTime() - lastBeatTime);
 		lastBeatTime = (new Date().getTime());
+		lastBeatDist = distance2(pointerTip, lastBeatLoc);
+		console.log(lastBeatDist);
 		lastBeatLoc = pointerTip;
 		returnVar = true;
             }
-            lastAverageVelocity = avgVel;
+	    lastAverageV = pointerSpeed;
+
         }
         return returnVar;
        }
