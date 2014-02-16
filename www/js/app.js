@@ -195,7 +195,7 @@ $(function() {
         if (counter != sounds.length) return;
 
         console.log('Buffer loaded...');
-        $('#main').fadeIn(3000);
+        $('#logo').fadeIn(3000);
 
         buffers.forEach(function(buffer, i) {
             var source = context.createBufferSource();
@@ -269,18 +269,16 @@ $(function() {
         Hue.setColor(maxVol/3);
     });
 
-    var started = false;
+    var fadeIn = false;
     dataProcessing.onDetectOrchLoc(function(pair) {
         var x = pair[0], y = pair[1];
 
-        if (!started) {
-            started = true;
-            applause.start(0);
-            setTimeout(function() {
-                sources.forEach(function(source) {
-                    source.start(0);
-                });
-            }, 3000);
+        if (!fadeIn) {
+            fadeIn = true;
+            $('#logo').fadeOut(function() {
+                $('#main').fadeIn(3000);
+                applause.start(0);
+            });
         }
 
         if (selected !== -1) return;
@@ -297,7 +295,16 @@ $(function() {
     var frames = [];
     var NUM_FRAMES = 3;
     var BASE_TEMPO = 108;
+    var started = false;
     dataProcessing.onDetectTempoChange(function() {
+
+        if (!started) {
+            sources.forEach(function(source) {
+                source.start(0);
+            });
+            started = true;
+        }
+
         var cur = new Date().getTime();
 
         if (frames.length == NUM_FRAMES) frames.pop();
