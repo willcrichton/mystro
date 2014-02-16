@@ -4,17 +4,21 @@
 <script>
 var distanceDisplay = document.getElementById("distance");
 var set = false;
+var relevantFinger = null;
+
+var relevantFinger
+
 var frontMostPointable = function(pointables){
-	var zs = pointables.map(function(x){x[2]});
-	var index = _.indexOf(zs, _.min(zs));
-	return pointables[index];
+    var zs = pointables.map(function(x){return x.stabilizedTipPosition[2]});
+    var index = _.indexOf(zs, _.min(zs));
+    return pointables[index];
 
 }
 
 var leftMostHand = function(hands){
-	var zs = hands.map(function(x){x[0]});
-	var index = _.indexOf(zs, _.min(zs));
-	return hands[index];
+    var zs = hands.map(function(x){return x.palmPosition[0]});
+    var index = _.indexOf(zs, _.min(zs));
+    return hands[index];
 
 }
 
@@ -22,14 +26,22 @@ var controller = new Leap.Controller();
 controller.on('frame', function(frame){
     if(frame.pointables.length > 0)
     {
-        var hands = frame.hands.filter(function(elem){return (elem.tools.length == 0)});
-        if(hands.length > 0 && hands[0].pointables.length > 0){
-        	var distance = hands[0].pointables[0].stabilizedTipPosition;
-        	distanceDisplay.innerText = "Set: " + set + " dist: " + Math.round(distance[2]);
-        	if(distance[2] < -100 && !set) {set = true;}
-        	if(distance[2] > 0 && set) {set = false;}
+        var prerelevant = frame.pointable(relevantFinger).valid;
+        if(relevantFinger == null || frame.pointable(relevantFinger).valid == false){
+            var hands = frame.hands.filter(function(elem){return ((elem.tools.length == 0) && (elem.pointables.length > 0))});
+            if(hands.length > 0){
+                hand  = leftMostHand(hands);
+                pointer = frontMostPointable(hand.pointables);
+                relevantFinger = pointer.id;
+            }
         }
-        
+        //console.log(frame.pointable(relevantFinger).valid, prerelevant);
+        if(frame.pointable(relevantFinger).valid != false){
+            var distance = frame.pointable(relevantFinger).stabilizedTipPosition;   
+            distanceDisplay.innerText = set//"Set: " + set + " dist: " + Math.round(distance[2]) + " id: " + relevantFinger;
+            if(distance[2] < -50 && !set) {set = true;}
+            if(distance[2] > 0 && set) {set = false;}
+        }
     }
 });
 controller.connect();

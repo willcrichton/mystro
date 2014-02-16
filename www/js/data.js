@@ -11,6 +11,7 @@ var dataProcessing = (function() {
     var lastAverageVelocity = 0;
     var currentlyTouched = 0;
     var lastBeatTime = 0;
+    var relevantFinger = null;
     var lastBeatLoc = [-1000,-1000,1000]; //intialized outside of range.
 
     detectSelectCallback = function() {
@@ -92,20 +93,23 @@ var dataProcessing = (function() {
     // Calls back true if an instrumental group is selected.
     // Calls back false othe group is deselected otherwise.
     function detectSelect(handLoc, hands) {
-        if(handLoc !== null && hands[0].pointables.length > 0) {
-            var distance = hands[0].pointables[0].stabilizedTipPosition;
-            console.log(distance[2]);
-
-            if(distance[2] < -100 && currentlyTouched == 0){
-                currentlyTouched = 1;
-                detectSelectCallback(true);
+        if(frame.pointables.length > 0)
+        {
+            var prerelevant = frame.pointable(relevantFinger).valid;
+            if(relevantFinger == null || frame.pointable(relevantFinger).valid == false){
+                var hands = frame.hands.filter(function(elem){return ((elem.tools.length == 0) && (elem.pointables.length > 0))});
+                if(hands.length > 0){
+                    hand  = leftMostHand(hands);
+                    pointer = frontMostPointable(hand.pointables);
+                    relevantFinger = pointer.id;
+                }
             }
-            else if(distance[2] > 0 && currentlyTouched == 1)
-            {
-                currentlyTouched = 0;
-                detectSelectCallback(false);
+            if(frame.pointable(relevantFinger).valid != false){
+                var distance = frame.pointable(relevantFinger).stabilizedTipPosition;   
+                distanceDisplay.innerText = set//"Set: " + set + " dist: " + Math.round(distance[2]) + " id: " + relevantFinger;
+                if(distance[2] < -50 && !set) {detectSelectCallback(true);}
+                if(distance[2] > 0 && set) {detectSelectCallback(false);}
             }
-
         }
     }
 
@@ -344,7 +348,7 @@ var dataProcessing = (function() {
         // palmVelocity : array 0..2 (normalized)
         // fingerDir : array 0..2 (normalized)
         // For each input, no data if null
-        pushData: function(hands, pointerTip, pointerSpeed, handLoc, palmVelocity, fingerDir) {
+        pushData: function(frame, hands, pointerTip, pointerSpeed, handLoc, palmVelocity, fingerDir) {
             if(handLoc === undefined) {
                 throw new Error('undefined handLoc passed to pushData.');
             }

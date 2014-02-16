@@ -138,7 +138,7 @@ $(function() {
                 var fingerDir = null;
             }
 
-            dataProcessing.pushData(hands, pointerTip, pointerSpeed, handLoc, palmVelocity, fingerDir);
+            dataProcessing.pushData(frame, hands, pointerTip, pointerSpeed, handLoc, palmVelocity, fingerDir);
         }
     });
     ctl.connect();
