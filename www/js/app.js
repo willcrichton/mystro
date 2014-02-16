@@ -362,7 +362,7 @@ $(function() {
 
     setInterval(function() {
         sources.forEach(function(source) {
-            var newVal = source.playbackRate.value * 0.9 + currentTempo * 0.1;
+            var newVal = source.playbackRate.value * 0.7 + currentTempo * 0.1 + 0.2;
             source.playbackRate.value = newVal;
             pitchShift = 0.33 * (2 - newVal);
         });
@@ -416,9 +416,6 @@ $(function() {
 	// }
  //    });
 	
-	    
-
-
     dataProcessing.onStart(function() {
         if (logoVisible) {
             $('#logo').fadeOut(function() {
