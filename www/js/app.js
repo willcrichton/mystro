@@ -1,4 +1,4 @@
-// hue integration
+// hue integration.
 var Hue;
 $(function() {
     // n = 0, 1, 2
